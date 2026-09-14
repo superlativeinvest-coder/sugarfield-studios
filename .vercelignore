@@ -1,13 +1,5 @@
 # Source materials and QA artifacts are not part of the Next.js runtime.
 PRODUCTS/
-/assets/*
-!/assets/fulfillment/
-/assets/fulfillment/*
-!/assets/fulfillment/pokopia/
-/assets/fulfillment/pokopia/*
-!/assets/fulfillment/pokopia/complete-player-system/
-/assets/fulfillment/pokopia/complete-player-system/*
-!/assets/fulfillment/pokopia/complete-player-system/p18-staged-delivery-manifest-20260913.json
 !public/assets/
 !public/assets/**
 _quick_start_pdf_qa/
