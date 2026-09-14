@@ -1,6 +1,6 @@
 import type { PokopiaJourney } from "@/lib/pokopia-funnel/journey";
 import type Stripe from "stripe";
-import { getDailyResetStripePriceId, getLiveP18StripePriceId } from "@/lib/stripe/configuration";
+import { getCanonicalP18StripePriceId, getDailyResetStripePriceId } from "@/lib/stripe/configuration";
 import { getProductFilePaths } from "@/lib/delivery/service";
 import { p18StagedManifest, validateP18StagedPackage } from "@/lib/delivery/p18-staged";
 
@@ -20,7 +20,7 @@ const tiers: Record<PokopiaTier, TierDefinition> = {
   FREE: { productId: "FREE", title: "Quick Start", totalCents: 0 },
   P06: { productId: "P06", title: "Daily Reset", totalCents: 499, stripePriceId: getDailyResetStripePriceId(), includes: ["Daily Reset"] },
   P16: { productId: "P16", title: "Adventure Companion", totalCents: 1999, stripePriceId: process.env.STRIPE_ADVENTURE_COMPANION_PRICE_ID, includes: ["Daily Reset", "Adventure Companion tools"] },
-  P18: { productId: "P18", title: "Complete Player System", totalCents: 2499, stripePriceId: getLiveP18StripePriceId(), includes: ["Daily Reset", "Adventure Companion tools", "Complete Player System exclusives"] },
+  P18: { productId: "P18", title: "Complete Player System", totalCents: 2499, stripePriceId: getCanonicalP18StripePriceId(), includes: ["Daily Reset", "Adventure Companion tools", "Complete Player System exclusives"] },
   P17: { productId: "P17", title: "Completionist Kit", totalCents: 1499, stripePriceId: process.env.STRIPE_P17_STANDALONE_PRICE_ID, includes: ["Field Guide", "26-card Reference Collection"] },
 };
 

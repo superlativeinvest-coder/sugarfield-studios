@@ -5,7 +5,7 @@ import { getStripeClient } from "@/lib/stripe/server";
 import { getStripeWebhookSecret } from "@/lib/stripe/configuration";
 import { P16_V2_FULFILLMENT_VERSION } from "@/lib/delivery/service";
 import { P18_STAGED_FULFILLMENT_VERSION } from "@/lib/delivery/p18-staged";
-import { getLiveP18StripePriceId } from "@/lib/stripe/configuration";
+import { getCanonicalP18StripePriceId } from "@/lib/stripe/configuration";
 import { applyPostCompanionIntent } from "@/lib/pokopia-funnel/journey";
 import { getOrCreatePokopiaJourney, recordPokopiaJourneyEvent, updatePokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
 import { supabaseCustomerIdFromStripeMetadata } from "@/lib/customer/stripe-binding";
@@ -43,7 +43,7 @@ export async function POST(request: Request): Promise<Response> {
   };
   const grantedAt = new Date().toISOString();
   const stripePriceId = session.metadata?.stripe_price_id;
-  if (productId === "P18" && (stripePriceId !== getLiveP18StripePriceId() || session.amount_total !== 2499 || session.currency !== "usd")) return Response.json({ error: "P18 payment does not match the canonical live package." }, { status: 400 });
+  if (productId === "P18" && (stripePriceId !== getCanonicalP18StripePriceId() || session.amount_total !== 2499 || session.currency !== "usd")) return Response.json({ error: "P18 payment does not match the canonical package." }, { status: 400 });
   const fulfillmentVersion = productId === "P16" && stripePriceId === process.env.STRIPE_ADVENTURE_COMPANION_PRICE_ID ? P16_V2_FULFILLMENT_VERSION : productId === "P18" ? P18_STAGED_FULFILLMENT_VERSION : undefined;
   const { order } = await createOrderIdempotently(repository, {
     provider: "stripe",

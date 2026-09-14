@@ -14,8 +14,10 @@ export function getStripeWebhookSecret(): string | undefined {
     : process.env.STRIPE_WEBHOOK_SECRET;
 }
 
-// P18 may only use a Price created in the same live Stripe account as the
-// server key. The historical test Price is deliberately never a fallback.
-export function getLiveP18StripePriceId(): string | undefined {
-  return isLiveStripeMode() ? process.env.STRIPE_P18_LIVE_PRICE_ID : undefined;
+// Keep live and Sandbox P18 prices strictly separated.  A live server must
+// have an explicit live Price; Sandbox uses its own canonical test Price.
+export function getCanonicalP18StripePriceId(): string | undefined {
+  return isLiveStripeMode()
+    ? process.env.STRIPE_P18_LIVE_PRICE_ID
+    : process.env.STRIPE_P18_COMPLETE_PLAYER_SYSTEM_PRICE_ID;
 }
