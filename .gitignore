@@ -5,6 +5,7 @@ node_modules/
 .next-local-stale*/
 .next-clean/
 .next-staging/
+.next-preview-check*/
 .vercel/
 *.tsbuildinfo
 out/
