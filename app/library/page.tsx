@@ -1,0 +1,2 @@
+import { PlaceholderPage } from "@/components/catalog/PlaceholderPage";
+export default function LibraryPage() { return <main><PlaceholderPage eyebrow="Customer library" title="Your library is coming in a later commerce milestone." description="The library route is protected by a customer-session boundary. Purchased files will appear here after authentication, verified entitlements, and secure file delivery are implemented." href="/shop" label="Browse the shop" /></main>; }

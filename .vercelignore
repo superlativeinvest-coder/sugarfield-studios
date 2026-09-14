@@ -1,0 +1,14 @@
+# Source materials and QA artifacts are not part of the Next.js runtime.
+PRODUCTS/
+/assets/
+!public/assets/
+!public/assets/**
+_quick_start_pdf_qa/
+tmp/
+prompts/
+.codex-remote-attachments/
+.next-local/
+.next-local-stale*/
+.next-stale-preview/
+tests/
+$

@@ -1,0 +1,45 @@
+{
+  "name": "sugarfield-studio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:staging": "tsx scripts/dev-staging.ts",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "catalog:validate": "tsx scripts/validate-catalog.ts",
+    "stripe:configure-daily-reset": "tsx scripts/configure-stripe-daily-reset.ts",
+    "stripe:configure-live-daily-reset": "tsx scripts/configure-stripe-live-daily-reset.ts",
+    "stripe:configure-mini-tool": "tsx scripts/configure-stripe-mini-tool.ts",
+    "stripe:configure-companion": "tsx scripts/configure-stripe-companion.ts",
+    "stripe:configure-companion-v2": "tsx scripts/configure-stripe-companion-v2.ts",
+    "stripe:configure-completionist": "tsx scripts/configure-stripe-completionist.ts",
+    "stripe:configure-complete-player-system": "tsx scripts/configure-stripe-complete-player-system.ts",
+    "supabase:stage-p18-private-storage": "tsx scripts/stage-p18-private-storage.ts",
+    "supabase:staging:check": "tsx scripts/supabase-staging-check.ts",
+    "supabase:configure-delivery": "tsx scripts/configure-supabase-delivery.ts",
+    "supabase:configure-p16-v2-delivery": "tsx scripts/configure-p16-v2-delivery.ts",
+    "supabase:update-p16-v2-spawn-tracker": "tsx scripts/update-p16-v2-spawn-tracker.ts",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.112.4",
+    "next": "^15.5.9",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "stripe": "^22.6.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "eslint": "^9.33.0",
+    "eslint-config-next": "15.5.0",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.2"
+  }
+}

@@ -1,0 +1,18 @@
+import Link from "next/link";
+import { ActionLink } from "@/components/site/ActionLink";
+import { Section } from "@/components/site/Section";
+import type { SugarfieldProduct } from "@/lib/catalog/types";
+
+export function ProductFunnel({ product, relatedProducts, bundleNames }: { product: SugarfieldProduct; relatedProducts: SugarfieldProduct[]; bundleNames: string[] }) {
+  const hasGallery = Boolean(product.images.hero || product.images.gallery?.length);
+  const price = product.price && product.currency ? new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(product.price) : "Price coming soon";
+  return <main>
+    <Section className="funnel-hero"><div className="funnel-hero__visual" aria-label={`${product.name} product artwork`}><span>{hasGallery ? "Product gallery connected" : "Approved product artwork coming soon"}</span></div><div className="funnel-hero__copy"><p className="eyebrow">{product.game} · {product.productType}</p><h1>{product.name}</h1><p className="funnel-hero__description">{product.description}</p>{product.shortBenefit && <p className="funnel-hero__benefit">{product.shortBenefit}</p>}<div className="funnel-price">{price}</div><ActionLink href={`/products/${product.slug}/purchase`}>Continue to purchase</ActionLink><p className="funnel-note">Checkout will be enabled after the Stripe milestone.</p></div></Section>
+    {product.benefits?.length ? <Section eyebrow="Why it helps" title="Made for the way you play."><div className="funnel-list">{product.benefits.map((benefit) => <div key={benefit}><span aria-hidden="true">✦</span><p>{benefit}</p></div>)}</div></Section> : null}
+    <Section className="funnel-details" eyebrow="Product details" title={product.contents?.length ? "What’s included" : "Product details are being finalized."} intro={product.contents?.length ? undefined : "We only publish page counts, formats, files, and other contents when they are confirmed in the product record."}>{product.contents?.length ? <ul className="contents-list">{product.contents.map((item) => <li key={item}>{item}</li>)}</ul> : <div className="empty-state"><p>Approved contents and delivery details will appear here.</p></div>}</Section>
+    <Section className="funnel-delivery" eyebrow="Delivery" title="Digital access, with the details kept clear."><div className="detail-pills"><span>{product.delivery?.digital === false ? "Physical product" : "Digital delivery details pending"}</span>{product.delivery?.formats?.map((format) => <span key={format}>{format}</span>)}{product.delivery?.fileCount ? <span>{product.delivery.fileCount} files</span> : null}</div></Section>
+    {product.faq?.length ? <Section eyebrow="Questions" title="Frequently asked questions."><div className="faq-list">{product.faq.map((item) => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div></Section> : null}
+    {relatedProducts.length || bundleNames.length ? <Section className="related-section" eyebrow="Keep exploring" title="More ways to build your toolkit."><div className="related-links">{relatedProducts.map((related) => <Link key={related.id} href={`/products/${related.slug}`}>{related.name}<span aria-hidden="true">→</span></Link>)}{bundleNames.map((bundle) => <Link key={bundle} href={`/bundles/${bundle}`}>{bundle.replaceAll("-", " ")} bundle<span aria-hidden="true">→</span></Link>)}</div></Section> : null}
+    <div className="funnel-purchase-bar"><div><strong>{product.name}</strong><span>{price}</span></div><ActionLink href={`/products/${product.slug}/purchase`}>Continue to purchase</ActionLink></div>
+  </main>;
+}

@@ -1,0 +1,2 @@
+import { PlaceholderPage } from "@/components/catalog/PlaceholderPage";
+export default async function OrderPage({ params }: { params: Promise<{ "order-id": string }> }) { return <main><PlaceholderPage eyebrow="Order" title={`Order ${(await params)["order-id"]}`} description="Order details and secure file access will appear after the order model and Stripe webhook fulfillment are connected." href="/shop" label="Continue shopping" /></main>; }

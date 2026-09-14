@@ -1,0 +1,14 @@
+alter table public.funnel_journeys add column if not exists selected_tier text not null default 'FREE';
+alter table public.funnel_journeys add column if not exists current_total_cents integer not null default 0;
+alter table public.funnel_journeys add column if not exists daily_reset_accepted boolean not null default false;
+alter table public.funnel_journeys add column if not exists companion_accepted boolean not null default false;
+alter table public.funnel_journeys add column if not exists p18_accepted boolean not null default false;
+alter table public.funnel_journeys add column if not exists p17_accepted boolean not null default false;
+alter table public.funnel_journeys add column if not exists pre_p17_tier text;
+alter table public.funnel_journeys add column if not exists current_step text;
+alter table public.funnel_journeys add column if not exists checkout_created boolean not null default false;
+alter table public.funnel_journeys add column if not exists checkout_completed boolean not null default false;
+alter table public.funnel_journeys add column if not exists stripe_checkout_session_id text;
+alter table public.funnel_journeys add column if not exists checkout_tier text;
+alter table public.funnel_journeys add column if not exists checkout_price_id text;
+alter table public.funnel_journeys add column if not exists checkout_amount_cents integer;
