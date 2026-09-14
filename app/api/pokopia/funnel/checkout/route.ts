@@ -1,6 +1,8 @@
 import { clearCheckout, getTier, getP18Readiness, isCumulativeCheckoutEnabled, checkoutFingerprintMatches, stripeSessionMatchesFingerprint, type PaidPokopiaTier } from "@/lib/pokopia-funnel/cumulative";
 import { getPokopiaJourney, updatePokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
 import { getStripeClient } from "@/lib/stripe/server";
+import { getCustomerSession } from "@/lib/customer/session";
+import { supabaseCustomerMetadataForStripe } from "@/lib/customer/stripe-binding";
 
 function journeyIdFor(request: Request): string | undefined { return request.headers.get("cookie")?.match(/(?:^|; )sf_pokopia_journey=([^;]+)/)?.[1]; }
 
@@ -13,6 +15,8 @@ export async function POST(request: Request): Promise<Response> {
   if (tier === "P18") { const readiness = getP18Readiness(); if (!readiness.ready) return Response.json({ error: readiness.reason }, { status: 503 }); }
   const definition = getTier(tier);
   if (!definition.stripePriceId) return Response.json({ error: "This final package has no configured Stripe Price ID." }, { status: 503 });
+  const customerSession = await getCustomerSession();
+  if (!customerSession) return Response.json({ error: "Sign in is required before checkout so your downloads can be secured." }, { status: 401 });
   const stripe = getStripeClient(); const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!stripe || !siteUrl) return Response.json({ error: "Stripe Checkout is not configured yet." }, { status: 503 });
   try {
@@ -29,7 +33,7 @@ export async function POST(request: Request): Promise<Response> {
       mode: "payment", line_items: [{ price: definition.stripePriceId, quantity: 1 }],
       success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/pokopia/funnel/checkout`,
-      metadata: { product_id: tier, offer_id: `pokopia_cumulative_${tier.toLowerCase()}`, sku: tier, funnel: "pokopia_daily_reset", funnel_step: "checkout", funnel_session_id: journey.funnelSessionId ?? "", journey_id: journey.journeyId, selected_tier: tier, canonical_total_cents: String(definition.totalCents), stripe_price_id: definition.stripePriceId },
+      metadata: { product_id: tier, offer_id: `pokopia_cumulative_${tier.toLowerCase()}`, sku: tier, funnel: "pokopia_daily_reset", funnel_step: "checkout", funnel_session_id: journey.funnelSessionId ?? "", journey_id: journey.journeyId, selected_tier: tier, canonical_total_cents: String(definition.totalCents), stripe_price_id: definition.stripePriceId, ...supabaseCustomerMetadataForStripe(customerSession.customer.id) },
     });
     await updatePokopiaJourney(currentJourney.journeyId, { ...currentJourney, checkoutCreated: true, stripeCheckoutSessionId: session.id, checkoutTier: tier, checkoutPriceId: definition.stripePriceId, checkoutAmountCents: definition.totalCents, currentStep: "checkout" });
     return Response.json({ checkoutUrl: session.url ?? undefined, reused: false });

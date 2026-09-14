@@ -8,6 +8,7 @@ import { P18_STAGED_FULFILLMENT_VERSION } from "@/lib/delivery/p18-staged";
 import { getLiveP18StripePriceId } from "@/lib/stripe/configuration";
 import { applyPostCompanionIntent } from "@/lib/pokopia-funnel/journey";
 import { getOrCreatePokopiaJourney, recordPokopiaJourneyEvent, updatePokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
+import { supabaseCustomerIdFromStripeMetadata } from "@/lib/customer/stripe-binding";
 
 export async function POST(request: Request): Promise<Response> {
   const stripe = getStripeClient();
@@ -30,6 +31,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const productId = session.metadata?.product_id ?? session.metadata?.productId;
   if (!productId) return Response.json({ error: "Paid session is missing an internal product ID." }, { status: 400 });
+  const customerId = supabaseCustomerIdFromStripeMetadata(session.metadata);
+  if (!customerId) return Response.json({ error: "Paid session is missing a valid Supabase customer identity." }, { status: 400 });
 
   const repository = getOrderRepository();
   if (!repository) return Response.json({ error: "Order storage is not configured; Stripe should retry this event." }, { status: 503 });
@@ -54,7 +57,7 @@ export async function POST(request: Request): Promise<Response> {
     amountTotal: session.amount_total ?? undefined,
     currency: session.currency ?? undefined,
     customerEmail: session.customer_details?.email ?? session.customer_email ?? undefined,
-    customerId: typeof session.customer === "string" ? session.customer : undefined,
+    customerId,
     funnelId: session.metadata?.funnel,
     funnelStep: session.metadata?.funnel_step,
     funnelSession: session.metadata?.funnel_session_id ?? session.metadata?.funnel_session,

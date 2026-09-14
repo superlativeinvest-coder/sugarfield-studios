@@ -5,6 +5,8 @@ import { isVerifiedCompanionBuyer, isVerifiedDailyResetBuyer, qualifiesForDailyR
 import { getOrderRepository } from "@/lib/orders/repository";
 import { canViewP17Downsell } from "@/lib/pokopia-funnel/journey";
 import { getPokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
+import { getCustomerSession } from "@/lib/customer/session";
+import { supabaseCustomerMetadataForStripe } from "@/lib/customer/stripe-binding";
 
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
@@ -60,6 +62,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const priceId = product.commerce?.stripePriceId;
   if (!priceId) return Response.json({ error: "This checkout price is not configured yet." } satisfies CheckoutResponse, { status: 503 });
+  const customerSession = await getCustomerSession();
+  if (!customerSession) return Response.json({ error: "Sign in is required before checkout so your downloads can be secured." } satisfies CheckoutResponse, { status: 401 });
 
   try {
     const journeyId = request.headers.get("cookie")?.match(/(?:^|; )sf_pokopia_journey=([^;]+)/)?.[1];
@@ -73,6 +77,7 @@ export async function POST(request: Request): Promise<Response> {
         offer_id: checkoutRequest.offerId ?? product.id,
         sku: checkoutRequest.sku ?? product.id,
         stripe_price_id: priceId,
+        ...supabaseCustomerMetadataForStripe(customerSession.customer.id),
         upgrade: String(checkoutRequest.upgrade ?? false),
         ...(checkoutRequest.sourceOrderId ? { source_order_id: checkoutRequest.sourceOrderId } : {}),
         ...(checkoutRequest.funnelId ? { funnel: checkoutRequest.funnelId } : {}),
