@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "catalog:validate": "tsx scripts/validate-catalog.ts",
     "stripe:configure-daily-reset": "tsx scripts/configure-stripe-daily-reset.ts",
+    "stripe:configure-quick-start": "tsx scripts/configure-stripe-quick-start.ts",
     "stripe:configure-live-daily-reset": "tsx scripts/configure-stripe-live-daily-reset.ts",
     "stripe:configure-mini-tool": "tsx scripts/configure-stripe-mini-tool.ts",
     "stripe:configure-companion": "tsx scripts/configure-stripe-companion.ts",

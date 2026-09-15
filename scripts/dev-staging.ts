@@ -30,6 +30,7 @@ const disabledCommerce = Object.fromEntries([
   "STRIPE_P17_STANDALONE_PRICE_ID",
   "STRIPE_P17_UPGRADE_PRICE_ID",
   "STRIPE_DAILY_RESET_PRICE_ID",
+  "STRIPE_QUICK_START_PRICE_ID",
   "STRIPE_MINI_TOOL_PRICE_ID",
 ].map((key) => [key, ""]));
 

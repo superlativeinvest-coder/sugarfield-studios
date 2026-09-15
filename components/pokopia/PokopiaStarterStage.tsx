@@ -22,16 +22,40 @@ export function PokopiaStarterStage() {
   const [sessionStatus, setSessionStatus] = useState<string | null>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const stagingAuthTestEnabled = process.env.NEXT_PUBLIC_STAGING_AUTH_TEST === "true";
+  const stripeQuickStartEnabled = process.env.NEXT_PUBLIC_QUICK_START_STRIPE_CHECKOUT_ENABLED === "true";
 
   useEffect(() => {
     trackSugarfieldEvent({ event: "pokopia_quick_start_viewed", funnel_id: "pokopia_daily_reset", funnel_version: "v1", page_path: window.location.pathname, product_id: offer.productId, sku: offer.productSku });
   }, [offer.productId, offer.productSku]);
+
+  useEffect(() => {
+    if (!stripeQuickStartEnabled || new URLSearchParams(window.location.search).get("free_checkout") !== "1") return;
+    window.history.replaceState({}, "", "/pokopia/funnel/start");
+    void startStripeCheckout();
+  // The return flag is consumed once after Supabase has restored its cookies.
+  }, [stripeQuickStartEnabled]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setLoading(true); setStatus(null);
     const state = readFunnelState(window.sessionStorage) ?? createFunnelSession();
     const attribution = captureAttribution(window.location.search, window.localStorage);
     trackSugarfieldEvent({ event: "pokopia_quick_start_signup_started", funnel_id: state.funnelId, funnel_version: "v1", page_path: window.location.pathname, product_id: offer.productId, sku: offer.productSku, funnel_session: state.sessionId, ...attribution.currentTouch });
+    if (stripeQuickStartEnabled) {
+      try {
+        const response = await fetch("/api/pokopia/quick-start/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ funnelSession: state.sessionId, attribution }) });
+        const result = await response.json() as { checkoutUrl?: string; error?: string };
+        if (response.status === 401) {
+          const authResponse = await fetch("/api/auth/magic-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, next: "/pokopia/funnel/start?free_checkout=1" }) });
+          const authResult = await authResponse.json() as { sent?: boolean; error?: string };
+          setStatus(authResponse.ok && authResult.sent ? "Check your email, then open the sign-in link in this browser to continue to free checkout." : authResult.error ?? "We could not send a sign-in link.");
+          return;
+        }
+        if (!response.ok || !result.checkoutUrl) { setStatus(result.error ?? "We could not start free checkout right now."); return; }
+        window.location.assign(result.checkoutUrl);
+      } catch { setStatus("Free checkout is unavailable right now. Please try again later."); }
+      finally { setLoading(false); }
+      return;
+    }
     try {
       const response = await fetch("/api/email-signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, productId: offer.productId, sku: offer.productSku, funnelSession: state.sessionId, firstTouchAttribution: attribution.firstTouch, currentTouchAttribution: attribution.currentTouch }) });
       const result = await response.json() as { subscribed?: boolean; accessGranted?: boolean; error?: string };
@@ -41,6 +65,19 @@ export function PokopiaStarterStage() {
       trackSugarfieldEvent({ event: "pokopia_quick_start_signup_completed", funnel_id: state.funnelId, funnel_version: "v1", page_path: window.location.pathname, product_id: offer.productId, sku: offer.productSku, funnel_session: state.sessionId, ...attribution.currentTouch });
       track("pokopia_lead_captured");
     } catch { setStatus("Signup is unavailable right now. Please try again later."); }
+    finally { setLoading(false); }
+  }
+
+  async function startStripeCheckout() {
+    setLoading(true); setStatus("Preparing your free checkout…");
+    const state = readFunnelState(window.sessionStorage) ?? createFunnelSession();
+    const attribution = captureAttribution(window.location.search, window.localStorage);
+    try {
+      const response = await fetch("/api/pokopia/quick-start/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ funnelSession: state.sessionId, attribution }) });
+      const result = await response.json() as { checkoutUrl?: string; error?: string };
+      if (!response.ok || !result.checkoutUrl) { setStatus(result.error ?? "We could not start free checkout right now."); return; }
+      window.location.assign(result.checkoutUrl);
+    } catch { setStatus("Free checkout is unavailable right now. Please try again later."); }
     finally { setLoading(false); }
   }
 
@@ -80,5 +117,6 @@ export function PokopiaStarterStage() {
     window.setTimeout(() => emailInputRef.current?.focus(), 300);
   }
 
-  return <FunnelFrame step="start"><section className="quick-start-hero"><div className="quick-start-hero__scene" aria-hidden="true" /><div className="quick-start-hero__copy"><p className="eyebrow">FREE POKOPIA PRINTABLE</p><h1><span>START YOUR</span><span>POKOPIA ADVENTURE</span><span>ORGANIZED</span></h1><p className="focused-funnel__lede">Get the free 7-page Quick Start Pack to organize your first sessions with a simple plan.</p><div className="quick-start-hero__facts"><span>FREE</span><span>7 PAGES</span><span>LETTER + A4</span><span>INSTANT ACCESS</span></div>{!accessReady ? <form className="focused-funnel__form" onSubmit={submit}><label htmlFor="pokopia-starter-email">Email address</label><div><input ref={emailInputRef} id="pokopia-starter-email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /><button type="submit" disabled={loading}>{loading ? "PREPARING ACCESS…" : offer.cta}</button></div>{status && <p className="focused-funnel__status" role="alert">{status}</p>}<p className="focused-funnel__microcopy">Free instant access. Includes US Letter + A4 PDFs.</p></form> : <div className="quick-start-access" id="quick-start-access" role="status"><strong>Your Quick Start Pack is ready.</strong><p>Choose a printable format:</p><div className="focused-funnel__actions"><button className="action-link action-link--primary" type="button" onClick={() => download("letter")}>DOWNLOAD US LETTER</button><button className="action-link action-link--secondary" type="button" onClick={() => download("a4")}>DOWNLOAD A4</button></div>{status && <p className="focused-funnel__status" role="alert">{status}</p>}<Link className="focused-funnel__quiet-link" href="/pokopia/funnel/daily-reset" onClick={clickDailyReset}>Explore the Pokopia Daily Reset System</Link></div>}{stagingAuthTestEnabled && <form className="focused-funnel__form" onSubmit={requestMagicLink}><label htmlFor="pokopia-staging-auth-email">Staging passwordless sign-in</label><div><input id="pokopia-staging-auth-email" name="staging-auth-email" type="email" autoComplete="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="authorized-test@example.com" required /><button type="submit" disabled={authLoading}>{authLoading ? "SENDING LINK…" : "SEND STAGING SIGN-IN LINK"}</button></div>{authStatus && <p className="focused-funnel__status" role="status">{authStatus}</p>}<p className="focused-funnel__microcopy">Available only in the staging dev server. Use an authorized test email.</p></form>}</div></section><section className="quick-start-product" aria-labelledby="quick-start-preview-title"><div className="quick-start-product__intro"><p className="eyebrow">A real seven-page printable pack</p><h2 id="quick-start-preview-title">7 PAGES TO HELP YOU START ORGANIZED.</h2><p>Preview five of the actual included pages, then download all seven after signup.</p></div><ProductPreviewFan /><ul className="quick-start-product__benefits"><li>Set your focus</li><li>Use a mini daily reset</li><li>Know what to do next</li><li>Sketch your island</li><li>Track rare finds</li></ul>{!accessReady && <><button className="quick-start-product__cta" type="button" onClick={focusSignup}>GET THE FREE 7-PAGE QUICK START PACK</button><p className="quick-start-product__reassurance">Free instant access. No physical item ships.</p></>}<div className="quick-start-product__trust" aria-label="Quick Start Pack details"><span>Instant download</span><span>Print-friendly</span><span>US Letter + A4</span><span>Secure access</span><span>7-page Quick Start</span></div></section>{stagingAuthTestEnabled && <section className="quick-start-product"><button className="action-link action-link--secondary" type="button" onClick={verifyServerSession}>VERIFY STAGING SERVER SESSION</button>{sessionStatus && <p className="focused-funnel__status" role="status">{sessionStatus}</p>}</section>}<p className="focused-funnel__asset-note">Fan-made printable tools for Pokopia players.</p></FunnelFrame>;
+  const usesStripeAccess = stripeQuickStartEnabled && !accessReady;
+  return <FunnelFrame step="start"><section className="quick-start-hero"><div className="quick-start-hero__scene" aria-hidden="true" /><div className="quick-start-hero__copy"><p className="eyebrow">FREE POKOPIA PRINTABLE</p><h1><span>START YOUR</span><span>POKOPIA ADVENTURE</span><span>ORGANIZED</span></h1><p className="focused-funnel__lede">Get the free 7-page Quick Start Pack to organize your first sessions with a simple plan.</p><div className="quick-start-hero__facts"><span>FREE</span><span>7 PAGES</span><span>LETTER + A4</span><span>INSTANT ACCESS</span></div>{!accessReady ? <form className="focused-funnel__form" onSubmit={submit}><label htmlFor="pokopia-starter-email">Email address</label><div><input ref={emailInputRef} id="pokopia-starter-email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /><button type="submit" disabled={loading}>{loading ? "PREPARING ACCESS…" : usesStripeAccess ? "CONTINUE TO FREE CHECKOUT" : offer.cta}</button></div>{status && <p className="focused-funnel__status" role="alert">{status}</p>}<p className="focused-funnel__microcopy">{usesStripeAccess ? "Sign in to continue to secure free checkout. No card is required." : "Free instant access. Includes US Letter + A4 PDFs."}</p></form> : <div className="quick-start-access" id="quick-start-access" role="status"><strong>Your Quick Start Pack is ready.</strong><p>Choose a printable format:</p><div className="focused-funnel__actions"><button className="action-link action-link--primary" type="button" onClick={() => download("letter")}>DOWNLOAD US LETTER</button><button className="action-link action-link--secondary" type="button" onClick={() => download("a4")}>DOWNLOAD A4</button></div>{status && <p className="focused-funnel__status" role="alert">{status}</p>}<Link className="focused-funnel__quiet-link" href="/pokopia/funnel/daily-reset" onClick={clickDailyReset}>Explore the Pokopia Daily Reset System</Link></div>}{stagingAuthTestEnabled && <form className="focused-funnel__form" onSubmit={requestMagicLink}><label htmlFor="pokopia-staging-auth-email">Staging passwordless sign-in</label><div><input id="pokopia-staging-auth-email" name="staging-auth-email" type="email" autoComplete="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="authorized-test@example.com" required /><button type="submit" disabled={authLoading}>{authLoading ? "SENDING LINK…" : "SEND STAGING SIGN-IN LINK"}</button></div>{authStatus && <p className="focused-funnel__status" role="status">{authStatus}</p>}<p className="focused-funnel__microcopy">Available only in the staging dev server. Use an authorized test email.</p></form>}</div></section><section className="quick-start-product" aria-labelledby="quick-start-preview-title"><div className="quick-start-product__intro"><p className="eyebrow">A real seven-page printable pack</p><h2 id="quick-start-preview-title">7 PAGES TO HELP YOU START ORGANIZED.</h2><p>Preview five of the actual included pages, then download all seven after signup.</p></div><ProductPreviewFan /><ul className="quick-start-product__benefits"><li>Set your focus</li><li>Use a mini daily reset</li><li>Know what to do next</li><li>Sketch your island</li><li>Track rare finds</li></ul>{!accessReady && <><button className="quick-start-product__cta" type="button" onClick={focusSignup}>GET THE FREE 7-PAGE QUICK START PACK</button><p className="quick-start-product__reassurance">{usesStripeAccess ? "Free checkout. No card or physical item required." : "Free instant access. No physical item ships."}</p></>}<div className="quick-start-product__trust" aria-label="Quick Start Pack details"><span>Instant download</span><span>Print-friendly</span><span>US Letter + A4</span><span>Secure access</span><span>7-page Quick Start</span></div></section>{stagingAuthTestEnabled && <section className="quick-start-product"><button className="action-link action-link--secondary" type="button" onClick={verifyServerSession}>VERIFY STAGING SERVER SESSION</button>{sessionStatus && <p className="focused-funnel__status" role="status">{sessionStatus}</p>}</section>}<p className="focused-funnel__asset-note">Fan-made printable tools for Pokopia players.</p></FunnelFrame>;
 }

@@ -41,6 +41,11 @@ test("Quick Start manifest uses the approved product identity and exactly two fi
   ]);
 });
 
+test("Quick Start has the same authenticated order-delivery file map as paid products", () => {
+  assert.equal(getProductFilePaths(QUICK_START_PRODUCT_ID).length, 2);
+  assert.equal(getProductFilePaths(QUICK_START_PRODUCT_ID).every((path) => path.startsWith("pokopia/quick-start/")), true);
+});
+
 test("Quick Start file allowlist rejects arbitrary and paid file identifiers", () => {
   assert.ok(getQuickStartFile("letter"));
   assert.ok(getQuickStartFile("a4"));

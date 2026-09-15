@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { createOrderIdempotently } from "@/lib/orders/idempotency";
 import { getOrderRepository } from "@/lib/orders/repository";
 import { getStripeClient } from "@/lib/stripe/server";
-import { getStripeWebhookSecret } from "@/lib/stripe/configuration";
+import { getQuickStartStripePriceId, getStripeWebhookSecret } from "@/lib/stripe/configuration";
 import { P16_V2_FULFILLMENT_VERSION } from "@/lib/delivery/service";
 import { P18_STAGED_FULFILLMENT_VERSION } from "@/lib/delivery/p18-staged";
 import { getCanonicalP18StripePriceId } from "@/lib/stripe/configuration";
@@ -43,6 +43,7 @@ export async function POST(request: Request): Promise<Response> {
   };
   const grantedAt = new Date().toISOString();
   const stripePriceId = session.metadata?.stripe_price_id;
+  if (productId === "FREE-QUICK-START" && (stripePriceId !== getQuickStartStripePriceId() || session.amount_total !== 0 || session.currency !== "usd")) return Response.json({ error: "Quick Start checkout does not match the configured Sandbox no-cost offer." }, { status: 400 });
   if (productId === "P18" && (stripePriceId !== getCanonicalP18StripePriceId() || session.amount_total !== 2499 || session.currency !== "usd")) return Response.json({ error: "P18 payment does not match the canonical package." }, { status: 400 });
   const fulfillmentVersion = productId === "P16" && stripePriceId === process.env.STRIPE_ADVENTURE_COMPANION_PRICE_ID ? P16_V2_FULFILLMENT_VERSION : productId === "P18" ? P18_STAGED_FULFILLMENT_VERSION : undefined;
   const { order } = await createOrderIdempotently(repository, {
@@ -74,7 +75,8 @@ export async function POST(request: Request): Promise<Response> {
     const journey = await getOrCreatePokopiaJourney(journeyId);
     if (journey) {
       const cumulativeCheckout = session.metadata?.funnel_step === "checkout";
-      const next = productId === "P06" ? applyPostCompanionIntent({ ...journey, dailyResetPurchased: true, ...(cumulativeCheckout ? { checkoutCompleted: true, journeyCompleted: true, completedAt: journey.completedAt ?? grantedAt } : {}) })
+      const next = productId === "FREE-QUICK-START" ? { ...journey, quickStartClaimed: true, selectedTier: "FREE" as const, currentTotalCents: 0, currentStep: "daily-reset" }
+        : productId === "P06" ? applyPostCompanionIntent({ ...journey, dailyResetPurchased: true, ...(cumulativeCheckout ? { checkoutCompleted: true, journeyCompleted: true, completedAt: journey.completedAt ?? grantedAt } : {}) })
         : productId === "P16" ? applyPostCompanionIntent({ ...journey, companionPurchased: true, ...(cumulativeCheckout ? { checkoutCompleted: true, journeyCompleted: true, completedAt: journey.completedAt ?? grantedAt } : {}) })
           : productId === "P18" ? { ...journey, p18Purchased: true, checkoutCompleted: cumulativeCheckout || journey.checkoutCompleted, journeyCompleted: true, completedAt: journey.completedAt ?? grantedAt, branchReason: "P18_PURCHASE_TERMINAL_TEMPORARY" as const }
             : productId === "P17" ? { ...journey, p17Purchased: true, checkoutCompleted: cumulativeCheckout || journey.checkoutCompleted, journeyCompleted: true, completedAt: journey.completedAt ?? grantedAt } : journey;
