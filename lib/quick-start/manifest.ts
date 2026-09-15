@@ -5,7 +5,7 @@ export const quickStartFiles = {
   letter: {
     id: "letter",
     customerFilename: "Pokopia_Quick_Start_Pack_US_Letter.pdf",
-    sourcePath: "PRODUCTS/POKOPIA/Quick_Start_Pack/assets/pdf/final/Pokopia_Quick_Start_Pack_US_Letter_FINAL.pdf",
+    sourcePath: "PRODUCTS/POKOPIA/Quick_Start_Pack/assets/pdf/final/Pokopia_Quick_Start_Pack_US_Letter.pdf",
     storagePath: "pokopia/quick-start/final-scope-20260909/Pokopia_Quick_Start_Pack_US_Letter.pdf",
     sha256: "E649FFE1274C3F5B9CE0A6498E88F2D8C2D99976B86C723CF2FDB6B1C9863569",
     byteSize: 19855586,
@@ -15,7 +15,7 @@ export const quickStartFiles = {
   a4: {
     id: "a4",
     customerFilename: "Pokopia_Quick_Start_Pack_A4.pdf",
-    sourcePath: "PRODUCTS/POKOPIA/Quick_Start_Pack/assets/pdf/final/Pokopia_Quick_Start_Pack_A4_FINAL.pdf",
+    sourcePath: "PRODUCTS/POKOPIA/Quick_Start_Pack/assets/pdf/final/Pokopia_Quick_Start_Pack_A4.pdf",
     storagePath: "pokopia/quick-start/final-scope-20260909/Pokopia_Quick_Start_Pack_A4.pdf",
     sha256: "B8D33E9F19E4CB6D49266B67B31DDCF7648257DC92836A8D34DCE4C37F7F4D7D",
     byteSize: 19293891,
