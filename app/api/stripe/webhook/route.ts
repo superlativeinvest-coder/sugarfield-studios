@@ -79,7 +79,8 @@ export async function POST(request: Request): Promise<Response> {
           : productId === "P18" ? { ...journey, p18Purchased: true, checkoutCompleted: cumulativeCheckout || journey.checkoutCompleted, journeyCompleted: true, completedAt: journey.completedAt ?? grantedAt, branchReason: "P18_PURCHASE_TERMINAL_TEMPORARY" as const }
             : productId === "P17" ? { ...journey, p17Purchased: true, checkoutCompleted: cumulativeCheckout || journey.checkoutCompleted, journeyCompleted: true, completedAt: journey.completedAt ?? grantedAt } : journey;
       await updatePokopiaJourney(journeyId, next);
-      await recordPokopiaJourneyEvent(journeyId, "pokopia_funnel_offer_purchased", { productId, offerId: session.metadata?.offer_id, funnelStep: session.metadata?.funnel_step, value: (session.amount_total ?? 0) / 100, branchReason: next.branchReason, funnelSessionId: session.metadata?.funnel_session_id ?? session.metadata?.funnel_session, firstTouchAttribution: parseAttribution(session.metadata?.attribution_first_touch), currentAttribution: parseAttribution(session.metadata?.attribution_current_touch) });
+      // funnel_events.value is stored as integer cents, matching Stripe's amount_total.
+      await recordPokopiaJourneyEvent(journeyId, "pokopia_funnel_offer_purchased", { productId, offerId: session.metadata?.offer_id, funnelStep: session.metadata?.funnel_step, value: session.amount_total ?? 0, branchReason: next.branchReason, funnelSessionId: session.metadata?.funnel_session_id ?? session.metadata?.funnel_session, firstTouchAttribution: parseAttribution(session.metadata?.attribution_first_touch), currentAttribution: parseAttribution(session.metadata?.attribution_current_touch) });
     }
   }
   return Response.json({ received: true, orderId: order.id });
