@@ -57,8 +57,10 @@ export async function POST(request: Request): Promise<Response> {
   const stripe = getStripeClient();
   if (!stripe) return Response.json({ error: "Stripe Checkout is not configured yet." } satisfies CheckoutResponse, { status: 503 });
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!siteUrl) return Response.json({ error: "The site URL is not configured for checkout redirects." } satisfies CheckoutResponse, { status: 503 });
+  // Production supplies its canonical public origin. Preview deployments use
+  // the request origin so Checkout always returns to the deployment that
+  // created the session.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
 
   const priceId = product.commerce?.stripePriceId;
   if (!priceId) return Response.json({ error: "This checkout price is not configured yet." } satisfies CheckoutResponse, { status: 503 });

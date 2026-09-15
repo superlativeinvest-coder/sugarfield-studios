@@ -17,8 +17,8 @@ export async function POST(request: Request): Promise<Response> {
   if (!definition.stripePriceId) return Response.json({ error: "This final package has no configured Stripe Price ID." }, { status: 503 });
   const customerSession = await getCustomerSession();
   if (!customerSession) return Response.json({ error: "Sign in is required before checkout so your downloads can be secured." }, { status: 401 });
-  const stripe = getStripeClient(); const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!stripe || !siteUrl) return Response.json({ error: "Stripe Checkout is not configured yet." }, { status: 503 });
+  const stripe = getStripeClient(); const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+  if (!stripe) return Response.json({ error: "Stripe Checkout is not configured yet." }, { status: 503 });
   try {
     let currentJourney = journey;
     if (checkoutFingerprintMatches(currentJourney, tier) && currentJourney.stripeCheckoutSessionId) {
