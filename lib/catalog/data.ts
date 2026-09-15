@@ -189,7 +189,7 @@ export const collections: SugarfieldCollection[] = [
     name: "Pokopia",
     description: "Guides, trackers, planners, and completion tools for Pokopia players.",
     game: "Pokopia",
-    productIds: ["P01", "P02", "P03", "P06", "P13", "P16", "P17"],
+    productIds: ["P01", "P02", "P03", "P06", "P13", "P16"],
     published: true,
   },
   {
