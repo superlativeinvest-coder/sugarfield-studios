@@ -35,6 +35,14 @@ export function PokopiaStarterStage() {
   // The return flag is consumed once after Supabase has restored its cookies.
   }, [stripeQuickStartEnabled]);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("quick_start_access") !== "1") return;
+    window.history.replaceState({}, "", "/pokopia/funnel/start");
+    void grantQuickStartAccess();
+  // This URL flag is consumed once immediately after the auth callback.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setLoading(true); setStatus(null);
     const state = readFunnelState(window.sessionStorage) ?? createFunnelSession();
@@ -57,14 +65,26 @@ export function PokopiaStarterStage() {
       return;
     }
     try {
-      const response = await fetch("/api/email-signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, productId: offer.productId, sku: offer.productSku, funnelSession: state.sessionId, firstTouchAttribution: attribution.firstTouch, currentTouchAttribution: attribution.currentTouch }) });
-      const result = await response.json() as { subscribed?: boolean; accessGranted?: boolean; error?: string };
-      if (!response.ok || result.subscribed !== true || result.accessGranted !== true) { setStatus(result.error ?? "We could not prepare secure access right now."); return; }
-      state.leadCaptured = true; state.email = email.trim().toLowerCase(); state.entryOffer = "pokopia_quick_start_pack"; state.lastStep = "start"; state.utm = attribution.currentTouch; writeFunnelState(window.sessionStorage, state); setAccessReady(true);
+      const authResponse = await fetch("/api/auth/magic-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, next: "/pokopia/funnel/start?quick_start_access=1" }) });
+      const authResult = await authResponse.json() as { sent?: boolean; error?: string };
+      setStatus(authResponse.ok && authResult.sent ? "Check your email, then open the sign-in link in this browser to get your Quick Start Pack." : authResult.error ?? "We could not send a sign-in link.");
+    } catch { setStatus("We could not send a sign-in link."); }
+    finally { setLoading(false); }
+  }
+
+  async function grantQuickStartAccess() {
+    setLoading(true); setStatus("Preparing secure access…");
+    const state = readFunnelState(window.sessionStorage) ?? createFunnelSession();
+    const attribution = captureAttribution(window.location.search, window.localStorage);
+    try {
+      const response = await fetch("/api/pokopia/quick-start/access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ funnelSession: state.sessionId, firstTouchAttribution: attribution.firstTouch, currentTouchAttribution: attribution.currentTouch }) });
+      const result = await response.json() as { accessGranted?: boolean; error?: string };
+      if (!response.ok || result.accessGranted !== true) { setStatus(result.error ?? "We could not prepare secure access right now."); return; }
+      state.leadCaptured = true; state.entryOffer = "pokopia_quick_start_pack"; state.lastStep = "start"; state.utm = attribution.currentTouch; writeFunnelState(window.sessionStorage, state); setAccessReady(true); setStatus(null);
       void fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "quick_start_claimed", funnelSessionId: state.sessionId, attribution }) });
       trackSugarfieldEvent({ event: "pokopia_quick_start_signup_completed", funnel_id: state.funnelId, funnel_version: "v1", page_path: window.location.pathname, product_id: offer.productId, sku: offer.productSku, funnel_session: state.sessionId, ...attribution.currentTouch });
       track("pokopia_lead_captured");
-    } catch { setStatus("Signup is unavailable right now. Please try again later."); }
+    } catch { setStatus("We could not prepare secure access right now."); }
     finally { setLoading(false); }
   }
 
