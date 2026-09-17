@@ -18,6 +18,22 @@ function readAttribution(value: unknown): Record<string, string> | undefined {
   return Object.keys(result).length ? result : undefined;
 }
 
+export async function GET(): Promise<Response> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(QUICK_START_ACCESS_COOKIE)?.value;
+  if (!token) return Response.json({ accessGranted: false });
+
+  const repository = getQuickStartAccessRepository();
+  if (!repository) return Response.json({ error: "Free product access storage is not configured yet." }, { status: 503 });
+
+  try {
+    const access = await repository.findByTokenHash(hashAccessToken(token));
+    return Response.json({ accessGranted: Boolean(access) });
+  } catch {
+    return Response.json({ error: "We could not restore secure access right now." }, { status: 503 });
+  }
+}
+
 export async function POST(request: Request): Promise<Response> {
   const auth = await getSupabaseServerAuthClient();
   if (!auth) return Response.json({ error: "Passwordless sign-in is not configured yet." }, { status: 503 });
