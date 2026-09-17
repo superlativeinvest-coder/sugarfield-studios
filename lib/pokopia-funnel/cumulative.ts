@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { getCanonicalP18StripePriceId, getDailyResetStripePriceId } from "@/lib/stripe/configuration";
 import { getProductFilePaths } from "@/lib/delivery/service";
 import { p18StagedManifest, validateP18StagedPackage } from "@/lib/delivery/p18-staged";
+import { classifySupabaseTarget } from "@/lib/supabase/environment";
 
 export const POKOPIA_CUMULATIVE_CHECKOUT_FLAG = "POKOPIA_CUMULATIVE_CHECKOUT_ENABLED";
 export type PokopiaTier = "FREE" | "P06" | "P16" | "P18" | "P17";
@@ -24,7 +25,14 @@ const tiers: Record<PokopiaTier, TierDefinition> = {
   P17: { productId: "P17", title: "Completionist Kit", totalCents: 1499, stripePriceId: process.env.STRIPE_P17_STANDALONE_PRICE_ID, includes: ["Field Guide", "26-card Reference Collection"] },
 };
 
-export function isCumulativeCheckoutEnabled(): boolean { return process.env[POKOPIA_CUMULATIVE_CHECKOUT_FLAG] === "true"; }
+export function isCumulativeCheckoutEnabledForEnvironment(environment: Record<string, string | undefined>): boolean {
+  // This flow is intentionally impossible to activate against production, even
+  // if a deployment environment accidentally receives the feature flag.
+  return environment[POKOPIA_CUMULATIVE_CHECKOUT_FLAG] === "true"
+    && classifySupabaseTarget(environment.SUPABASE_URL) === "STAGING"
+    && environment.STRIPE_SECRET_KEY?.startsWith("sk_test_") === true;
+}
+export function isCumulativeCheckoutEnabled(): boolean { return isCumulativeCheckoutEnabledForEnvironment(process.env); }
 export function getTier(tier: PokopiaTier): TierDefinition { return tiers[tier]; }
 export function formatCents(cents: number): string { return `$${(cents / 100).toFixed(2)}`; }
 export function getP18ReadinessStatus() {
@@ -49,7 +57,6 @@ export function getP18Readiness(): { ready: boolean; reason?: string } {
   return { ready: true };
 }
 export function isTierCheckoutReady(tier: PaidPokopiaTier): boolean { return tier !== "P18" || getP18Readiness().ready; }
-export function isP18Eligible(journey: PokopiaJourney): boolean { return journey.selectedTier === "P06" || journey.selectedTier === "P16"; }
 export function getUpgradeDeltaCents(from: PokopiaTier, to: PokopiaTier): number { return getTier(to).totalCents - getTier(from).totalCents; }
 export function clearCheckout(journey: PokopiaJourney): PokopiaJourney {
   return { ...journey, checkoutCreated: false, checkoutCompleted: false, stripeCheckoutSessionId: undefined, checkoutTier: undefined, checkoutPriceId: undefined, checkoutAmountCents: undefined };

@@ -25,7 +25,13 @@ export function PokopiaDailyResetStage({ cumulativeEnabled = false }: { cumulati
   const hasLead = Boolean(getCurrentFunnelState()?.leadCaptured);
   const cumulative = useCumulativeJourney(cumulativeEnabled);
 
-  const skip = () => {
+  const skip = async () => {
+    if (cumulativeEnabled) {
+      const result = await cumulative.act("daily_reset_skipped");
+      if (result.nextRoute) window.location.assign(result.nextRoute);
+      else setStatus(result.error ?? "Your setup could not be updated.");
+      return;
+    }
     const state = getCurrentFunnelState();
     if (state) { state.dailyResetSkipped = true; state.lastStep = "companion"; window.sessionStorage.setItem("sugarfield_pokopia_daily_reset_funnel", JSON.stringify(state)); }
     track("pokopia_daily_reset_skipped", offer.funnelPrice);
@@ -68,8 +74,8 @@ export function PokopiaDailyResetStage({ cumulativeEnabled = false }: { cumulati
       <div className="daily-reset-hero__details">
         <ul className="daily-reset-hero__benefits">{offer.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}</ul>
         <div className="daily-reset-hero__actions">
-          {cumulativeEnabled ? <button type="button" onClick={buy} disabled={loading}>{loading ? "UPDATING SETUP…" : "ADD DAILY RESET — $4.99"}</button> : ready ? <button type="button" onClick={buy} disabled={loading}>{loading ? "CONNECTING TO STRIPE…" : "ADD DAILY RESET TO MY SYSTEM →"}</button> : <button type="button" disabled aria-describedby="daily-reset-unavailable">ADD DAILY RESET TO MY SYSTEM →</button>}
-          <Link href="/pokopia/funnel/companion" onClick={skip}>No thanks, continue without Daily Reset</Link>
+          {cumulativeEnabled ? <button type="button" onClick={buy} disabled={loading || !cumulative.ready}>{loading ? "UPDATING SETUP…" : "ADD DAILY RESET — $4.99"}</button> : ready ? <button type="button" onClick={buy} disabled={loading}>{loading ? "CONNECTING TO STRIPE…" : "ADD DAILY RESET TO MY SYSTEM →"}</button> : <button type="button" disabled aria-describedby="daily-reset-unavailable">ADD DAILY RESET TO MY SYSTEM →</button>}
+          <Link href="/pokopia/funnel/companion" onClick={(event) => { if (cumulativeEnabled) event.preventDefault(); void skip(); }}>No thanks, continue without Daily Reset</Link>
         </div>
         {!ready && <p id="daily-reset-unavailable" className="focused-funnel__status">Checkout is not available yet: the Stripe price and fulfillment mapping are still pending.</p>}
         {cumulativeEnabled && <FunnelCartSummary journey={cumulative.journey} label="Add Daily Reset" deltaCents={499} newTotalCents={499} />}

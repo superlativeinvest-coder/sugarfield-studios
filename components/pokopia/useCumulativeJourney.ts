@@ -7,12 +7,20 @@ type JourneyResponse = { journey?: CumulativeJourneyView; nextRoute?: string; er
 
 export function useCumulativeJourney(enabled: boolean) {
   const [journey, setJourney] = useState<CumulativeJourneyView | null>(null);
-  useEffect(() => { if (!enabled) return; void fetch("/api/pokopia/funnel/journey", { cache: "no-store" }).then(async (response) => { const result = await response.json() as JourneyResponse; if (response.ok && result.journey) setJourney(result.journey); }).catch(() => undefined); }, [enabled]);
+  const [ready, setReady] = useState(!enabled);
+  useEffect(() => {
+    if (!enabled) { setReady(true); return; }
+    setReady(false);
+    void fetch("/api/pokopia/funnel/journey", { cache: "no-store" })
+      .then(async (response) => { const result = await response.json() as JourneyResponse; if (response.ok && result.journey) setJourney(result.journey); })
+      .catch(() => undefined)
+      .finally(() => setReady(true));
+  }, [enabled]);
   const act = useCallback(async (action: string): Promise<JourneyResponse> => {
     const response = await fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
     const result = await response.json() as JourneyResponse; if (result.journey) setJourney(result.journey); return result;
   }, []);
-  return { journey, act };
+  return { journey, ready, act };
 }
 
 export function funnelCartSummaryCopy(journey: CumulativeJourneyView | null, label: string, deltaCents: number, newTotalCents: number): string[] {

@@ -33,6 +33,7 @@ export interface OrderRepository {
   findById(orderId: string): Promise<Order | null>;
   findByProviderSessionId(providerSessionId: string): Promise<Order | null>;
   findByFunnelSession(funnelSession: string): Promise<Order | null>;
+  findLatestPaidByCustomerAndProduct(customerId: string, productId: string): Promise<Order | null>;
   createPaidOrder(input: PaidOrderInput): Promise<Order>;
   updateFulfillmentStatus(orderId: string, status: FulfillmentStatus): Promise<Order | null>;
 }

@@ -3,6 +3,10 @@ PRODUCTS/
 !public/assets/
 !public/assets/**
 _quick_start_pdf_qa/
+_AGENTS/
+_MARKETING/
+_SYSTEM/
+Direct Connection.txt
 tmp/
 prompts/
 .codex-remote-attachments/

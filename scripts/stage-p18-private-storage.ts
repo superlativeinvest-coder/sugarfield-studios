@@ -11,7 +11,13 @@ const execute = process.argv.includes("--execute");
 const url = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "digital-products";
-if (!url || !serviceRoleKey) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
+if (
+  process.env.POKOPIA_STAGING_ONLY !== "true"
+  || url !== "https://faxsnbdjzniwyhtnsvfz.supabase.co"
+  || !serviceRoleKey
+) {
+  throw new Error("P18 storage staging is restricted to the authorized staging Supabase project.");
+}
 const configuredUrl = url;
 const configuredServiceRoleKey = serviceRoleKey;
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex").toUpperCase();

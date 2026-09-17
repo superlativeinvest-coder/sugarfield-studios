@@ -26,6 +26,13 @@ class SupabaseOrderRepository implements OrderRepository {
     if (error) throw new Error(`Could not read funnel order: ${error.message}`);
     return data ? toOrder(data as OrderRow) : null;
   }
+  async findLatestPaidByCustomerAndProduct(customerId: string, productId: string): Promise<Order | null> {
+    const client = getSupabaseServerClient();
+    if (!client) return null;
+    const { data, error } = await client.from("orders").select("*").eq("customer_id", customerId).eq("product_id", productId).eq("status", "paid").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (error) throw new Error(`Could not read customer order: ${error.message}`);
+    return data ? toOrder(data as OrderRow) : null;
+  }
   async updateFulfillmentStatus(orderId: string, status: "pending" | "fulfilled" | "failed"): Promise<Order | null> {
     const client = getSupabaseServerClient();
     if (!client) return null;

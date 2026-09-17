@@ -17,10 +17,11 @@ export async function POST(request: Request): Promise<Response> {
   if (!definition.stripePriceId) return Response.json({ error: "This final package has no configured Stripe Price ID." }, { status: 503 });
   const customerSession = await getCustomerSession();
   if (!customerSession) return Response.json({ error: "Sign in is required before checkout so your downloads can be secured." }, { status: 401 });
+  if (journey.customerId && journey.customerId !== customerSession.customer.id) return Response.json({ error: "This funnel journey belongs to another signed-in customer." }, { status: 403 });
   const stripe = getStripeClient(); const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
   if (!stripe) return Response.json({ error: "Stripe Checkout is not configured yet." }, { status: 503 });
   try {
-    let currentJourney = journey;
+    let currentJourney = journey.customerId ? journey : { ...journey, customerId: customerSession.customer.id };
     if (checkoutFingerprintMatches(currentJourney, tier) && currentJourney.stripeCheckoutSessionId) {
       try {
         const existing = await stripe.checkout.sessions.retrieve(currentJourney.stripeCheckoutSessionId, { expand: ["line_items"] });

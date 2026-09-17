@@ -4,9 +4,11 @@ import { PokopiaCompletePlayerSystemStage } from "@/components/pokopia/PokopiaCo
 import { pokopiaFunnelOffers } from "@/data/pokopia-funnel";
 import { isVerifiedCompanionBuyer, isVerifiedDailyResetBuyer } from "@/lib/orders/qualification";
 import { getOrderRepository } from "@/lib/orders/repository";
-import { getP18Readiness, isCumulativeCheckoutEnabled, isP18Eligible } from "@/lib/pokopia-funnel/cumulative";
+import { getP18Readiness, isCumulativeCheckoutEnabled } from "@/lib/pokopia-funnel/cumulative";
 import { getPokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
 import { cookies } from "next/headers";
+import { getCustomerSession } from "@/lib/customer/session";
+import { resolveP18Eligibility } from "@/lib/pokopia-funnel/eligibility";
 
 export const metadata: Metadata = { title: "Pokopia Complete Player System | Sugarfield Studio", description: "A qualified upsell for verified Pokopia system buyers." };
 export const dynamic = "force-dynamic";
@@ -19,6 +21,8 @@ export default async function CompletePlayerSystemPage({ searchParams }: { searc
   const cumulativeEnabled = isCumulativeCheckoutEnabled();
   const journeyId = (await cookies()).get("sf_pokopia_journey")?.value;
   const journey = cumulativeEnabled && journeyId ? await getPokopiaJourney(journeyId) : null;
-  if (!localPreview && (cumulativeEnabled ? !journey || !isP18Eligible(journey) : !order || (!isVerifiedDailyResetBuyer(order) && !isVerifiedCompanionBuyer(order)))) redirect("/pokopia/funnel/complete");
+  const customer = await getCustomerSession();
+  const cumulativeEligible = journey ? await resolveP18Eligibility(journey, getOrderRepository(), customer?.customer.id) : false;
+  if (!localPreview && (cumulativeEnabled ? !journey || !cumulativeEligible : !order || (!isVerifiedDailyResetBuyer(order) && !isVerifiedCompanionBuyer(order)))) redirect("/pokopia/funnel/complete");
   return <PokopiaCompletePlayerSystemStage offer={pokopiaFunnelOffers.completePlayerSystem} sourceOrderId={localPreview ? "local-preview" : order?.id ?? ""} sourceProductId={localPreview || order?.productId === "P16" ? "P16" : "P06"} cumulativeEnabled={cumulativeEnabled} p18Ready={getP18Readiness().ready} />;
 }

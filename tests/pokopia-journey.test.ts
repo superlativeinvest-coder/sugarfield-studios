@@ -33,6 +33,7 @@ test("Journey E: only an eligible P18 view and skip unlocks P17", () => {
 test("P17 actions require the trusted P18-skip downsell state", () => {
   assert.equal(canActOnP17Downsell(journey({ selectedTier: "P16", currentStep: "completionist-kit" })), false);
   assert.equal(canActOnP17Downsell(journey({ selectedTier: "P06", p18Eligible: true, p18Viewed: true, p18Skipped: true, currentStep: "completionist-kit" })), true);
+  assert.equal(canActOnP17Downsell(journey({ selectedTier: "FREE", p18Eligible: true, p18Viewed: true, p18Skipped: true, currentStep: "completionist-kit" })), true);
 });
 test("Journey F: P17 skip completes once and remains idempotent", () => {
   const first = { ...journey({ p18Eligible: true, p18Viewed: true, p18Skipped: true }), p17Skipped: true, journeyCompleted: true };

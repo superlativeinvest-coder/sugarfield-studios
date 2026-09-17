@@ -13,6 +13,10 @@ if (!url || !serviceRoleKey) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_
 const configuredUrl = url;
 const configuredServiceRoleKey = serviceRoleKey;
 
+if (process.env.POKOPIA_STAGING_ONLY !== "true" || configuredUrl !== "https://faxsnbdjzniwyhtnsvfz.supabase.co") {
+  throw new Error("P17 delivery cutover is restricted to the authorized staging Supabase project.");
+}
+
 const activeFiles = [
   ["PRODUCTS/POKOPIA/P17_Completionist_Kit_Final/customer-files/Pokopia-Field-Guide-US-Letter.pdf", "pokopia/completionist-kit/v2-corrected-20260908/Pokopia-Field-Guide-US-Letter.pdf", "application/pdf", "7B060DDC9B3F0FC946E4271CCA65197FC2945E19C549798CE7C2B791E216FFAF"],
   ["PRODUCTS/POKOPIA/P17_Completionist_Kit_Final/customer-files/Pokopia-Field-Guide-A4.pdf", "pokopia/completionist-kit/v2-corrected-20260908/Pokopia-Field-Guide-A4.pdf", "application/pdf", "72799BC69CE5A0633E9CE782996952C30782A56C09DBC6A147711DB46F37D97D"],
@@ -60,8 +64,12 @@ async function main() {
   }
 
   const legacy = await Promise.all(legacyPaths.map(async (path) => {
-    const bytes = await download(path);
-    return { path, bytes: bytes.length, sha256: sha256(bytes) };
+    try {
+      const bytes = await download(path);
+      return { path, present: true, bytes: bytes.length, sha256: sha256(bytes) };
+    } catch {
+      return { path, present: false };
+    }
   }));
   const { data: orders, error: ordersError } = await client.from("orders").select("id, created_at, entitlements").eq("product_id", "P17").eq("status", "paid");
   if (ordersError) throw new Error(`Could not inspect P17 order history: ${ordersError.message}`);

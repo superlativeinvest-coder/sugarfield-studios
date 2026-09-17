@@ -23,7 +23,7 @@ export function PokopiaCompanionStage({ offer, dailyResetOrderId, cumulativeEnab
     writeFunnelState(window.sessionStorage, current);
     setState(current);
   }, []);
-  const checkoutReady = cumulativeEnabled || Boolean(offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && state);
+  const checkoutReady = cumulativeEnabled ? cumulative.ready : Boolean(offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && state);
   async function startCheckout() {
     if (cumulativeEnabled) { const result = await cumulative.act("companion_accepted"); if (result.nextRoute) window.location.assign(result.nextRoute); return; }
     if (!checkoutReady || !state || !offer.catalogProductId) { track("pokopia_companion_unavailable"); return; }
