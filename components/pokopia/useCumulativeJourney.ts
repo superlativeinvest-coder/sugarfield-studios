@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export type CumulativeJourneyView = { selectedTier: "FREE" | "P06" | "P16" | "P18" | "P17"; currentTotalCents: number };
+export type CumulativeJourneyView = { selectedProducts: ("P06" | "P16" | "P18" | "P17")[]; currentTotalCents: number; quickStartClaimed?: boolean };
 type JourneyResponse = { journey?: CumulativeJourneyView; nextRoute?: string; error?: string };
 
 export function useCumulativeJourney(enabled: boolean) {

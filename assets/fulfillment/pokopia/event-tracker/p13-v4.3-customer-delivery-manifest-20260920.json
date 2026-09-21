@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "productId": "P13",
+  "productName": "Pokopia Event Tracker",
+  "status": "staged",
+  "deliveryMapStatus": "staged-not-active",
+  "storageUploadStatus": "uploaded-verified-staging",
+  "sourceApproval": "EVENT_TRACKER_APPROVED_20260918_REBUILD_QA.md",
+  "sourceVersion": "P13_V4.3_APPROVED_20260918",
+  "storageReuse": "P16_V3_19_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED",
+  "pdfCount": 2,
+  "files": [
+    {
+      "format": "US Letter",
+      "sourcePath": "PRODUCTS/POKOPIA/P13_Event_Tracker_v2/assets/pdf/pokopia-event-tracker-letter.pdf",
+      "logicalDeliveryPath": "pokopia/p16-adventure-companion/P16_V3_19_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P13-Pokopia-Event-Tracker-US-Letter.pdf",
+      "bytes": 26672611,
+      "sha256": "2F3042641C598FF8658D943C5CA8759B941109218508BAED44F5DA4D2CFF1F98",
+      "pageCount": 4,
+      "pageSize": "612 x 792 pts"
+    },
+    {
+      "format": "A4",
+      "sourcePath": "PRODUCTS/POKOPIA/P13_Event_Tracker_v2/assets/pdf/pokopia-event-tracker-a4.pdf",
+      "logicalDeliveryPath": "pokopia/p16-adventure-companion/P16_V3_19_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P13-Pokopia-Event-Tracker-A4.pdf",
+      "bytes": 27895477,
+      "sha256": "9F9210A7D1D418067F57453128C47C627F98B6CE3DD579E5D82773A94C728AE7",
+      "pageCount": 4,
+      "pageSize": "595.276 x 841.89 pts"
+    }
+  ]
+}

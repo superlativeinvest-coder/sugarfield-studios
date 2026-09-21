@@ -1,5 +1,6 @@
 import type { DeliveryProvider, Entitlement, SecureDownload } from "./types";
 import { P18_STAGED_FULFILLMENT_VERSION, getStagedP18PackageFiles } from "./p18-staged";
+import { P16_V3_FULFILLMENT_VERSION, getP16V3PackageFiles } from "./p16-v3-staged";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getQuickStartFile, type QuickStartFileId } from "@/lib/quick-start/manifest";
 
@@ -10,8 +11,11 @@ export function getDeliveryProvider(): DeliveryProvider | null {
 const productFiles: Record<string, string[]> = {
   P06: ["pokopia/daily-reset/pokopia-daily-reset-checklist-a4.pdf", "pokopia/daily-reset/pokopia-daily-reset-checklist-print-2026-05.pdf"],
   P13: [
-    "pokopia/mini-tool/v3-page2-shell-20260908/Pokopia-Event-Tracker-A4.pdf",
-    "pokopia/mini-tool/v3-page2-shell-20260908/Pokopia-Event-Tracker-US-Letter.pdf",
+    // P13 standalone delivery reuses the approved 2026-09-18 Event Tracker
+    // objects already verified in the staged P16 V3 package. The legacy
+    // mini-tool path is retained only in historical manifests.
+    "pokopia/p16-adventure-companion/P16_V3_19_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P13-Pokopia-Event-Tracker-A4.pdf",
+    "pokopia/p16-adventure-companion/P16_V3_19_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P13-Pokopia-Event-Tracker-US-Letter.pdf",
   ],
   P16: ["pokopia/companion/pokopia-adventure-companion-p14-cloud-islands-planner-a4.pdf", "pokopia/companion/pokopia-adventure-companion-p14-cloud-islands-planner-letter.pdf", "pokopia/companion/pokopia-adventure-companion-p15-spawn-tracker-guide-a4.pdf", "pokopia/companion/pokopia-adventure-companion-p15-spawn-tracker-guide-letter.pdf"],
   P17: ["pokopia/completionist-kit/v2-corrected-20260908/Pokopia-Field-Guide-US-Letter.pdf", "pokopia/completionist-kit/v2-corrected-20260908/Pokopia-Field-Guide-A4.pdf", "pokopia/completionist-kit/v2-corrected-20260908/Pokopia-26-Card-Reference-Collection.pdf", "pokopia/completionist-kit/v2-corrected-20260908/README.md"],
@@ -20,6 +24,7 @@ const productFiles: Record<string, string[]> = {
 
 export const P16_LEGACY_FULFILLMENT_VERSION = "P16_LEGACY_7_99";
 export const P16_V2_FULFILLMENT_VERSION = "P16_V2_19_99";
+export { P16_V3_FULFILLMENT_VERSION } from "./p16-v3-staged";
 const p16V2Files = [
   "pokopia/p16-adventure-companion/p06-daily-reset-letter.pdf",
   "pokopia/p16-adventure-companion/p06-daily-reset-a4.pdf",
@@ -37,6 +42,7 @@ const p16V2Files = [
 
 export function getProductFilePaths(productId: string, fulfillmentVersion?: string): string[] {
   if (productId === "P16" && fulfillmentVersion === P16_V2_FULFILLMENT_VERSION) return [...p16V2Files];
+  if (productId === "P16" && fulfillmentVersion === P16_V3_FULFILLMENT_VERSION) return getP16V3PackageFiles().map((file) => file.logicalDeliveryPath);
   // This versioned map is intentionally unreachable until the P18 feature
   // gates and a verified webhook grant are enabled in a later promotion.
   if (productId === "P18" && fulfillmentVersion === P18_STAGED_FULFILLMENT_VERSION) return getStagedP18PackageFiles().map((file) => file.logicalDeliveryPath);

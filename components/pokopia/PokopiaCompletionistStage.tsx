@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
 import { FunnelFrame, getCurrentFunnelState, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
 import type { PokopiaFunnelOffer } from "@/data/pokopia-funnel";
 import { STORAGE_KEY } from "@/lib/attribution/capture";
@@ -17,7 +16,6 @@ export function PokopiaCompletionistStage({ offer, cumulativeEnabled = false }: 
   const state = getCurrentFunnelState();
   const cumulative = useCumulativeJourney(cumulativeEnabled);
   const checkoutReady = Boolean(offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && offer.stripePriceId && state);
-  useEffect(() => { void fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "p17_downsell_viewed" }) }); }, []);
   async function startCheckout() {
     if (cumulativeEnabled) { const result = await cumulative.act("p17_accepted"); if (result.nextRoute) window.location.assign(result.nextRoute); return; }
     if (!checkoutReady || !state || !offer.catalogProductId) { track("pokopia_completionist_unavailable"); return; }
@@ -47,8 +45,8 @@ export function PokopiaCompletionistStage({ offer, cumulativeEnabled = false }: 
         <p className="completionist-hero__lede">A smaller completion-focused set for players who still want help tracking what remains—without the full system.</p>
         <div className="completionist-hero__price"><strong>$14.99</strong><span>ONE-TIME PURCHASE<br />US LETTER + A4 PDFs</span></div>
         <ul className="completionist-hero__benefits"><li>Field Guide quick reference</li><li>Field Guide in US Letter and A4</li><li>26-card digital reference collection</li><li>Instant digital access</li></ul>
-        {cumulativeEnabled && <FunnelCartSummary journey={cumulative.journey} label="Switch to Completionist Kit" deltaCents={0} newTotalCents={1499} />}
-        <div className="completionist-hero__actions"><button className="action-link action-link--primary" type="button" onClick={startCheckout} disabled={cumulativeEnabled ? !cumulative.ready || !cumulative.journey : !checkoutReady}>{cumulativeEnabled ? "SWITCH TO COMPLETIONIST KIT — $14.99" : checkoutReady ? "ADD COMPLETIONIST KIT TO MY SETUP" : "COMPLETIONIST KIT UNAVAILABLE"}</button><button className="completionist-hero__skip" type="button" onClick={skip} disabled={cumulativeEnabled && !cumulative.ready}>No thanks, finish my setup</button></div>
+        {cumulativeEnabled && <FunnelCartSummary journey={cumulative.journey} label="Add Completionist Kit" deltaCents={1499} newTotalCents={(cumulative.journey?.currentTotalCents ?? 0) + 1499} />}
+        <div className="completionist-hero__actions"><button className="action-link action-link--primary" type="button" onClick={startCheckout} disabled={cumulativeEnabled ? !cumulative.ready || !cumulative.journey : !checkoutReady}>{cumulativeEnabled ? "BUY" : checkoutReady ? "BUY" : "COMPLETIONIST KIT UNAVAILABLE"}</button><button className="completionist-hero__skip" type="button" onClick={skip} disabled={cumulativeEnabled && !cumulative.ready}>SKIP</button></div>
         {!checkoutReady && <p className="focused-funnel__status" role="status">Checkout is unavailable right now.</p>}
         <p className="completionist-hero__digital">DIGITAL DOWNLOAD · NO PHYSICAL ITEM SHIPS</p>
       </div>

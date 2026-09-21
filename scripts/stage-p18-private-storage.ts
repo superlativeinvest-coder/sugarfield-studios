@@ -1,12 +1,19 @@
 import { loadEnvConfig } from "@next/env";
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { getStagedP18PackageFiles, validateP18StagedPackage } from "@/lib/delivery/p18-staged";
+import { P18_STAGED_FULFILLMENT_VERSION, getStagedP18PackageFiles, validateP18StagedPackage } from "@/lib/delivery/p18-staged";
 import { P18_STORAGE_ROOT, planP18StorageStage, type P18RemoteState, type P18StorageVerificationRecord, type P18StorageVerificationReport } from "@/lib/delivery/p18-storage-staging";
 
 loadEnvConfig(process.cwd());
+const stagingEnvPath = join(process.cwd(), ".env.staging.local");
+if (!existsSync(stagingEnvPath)) throw new Error("Missing .env.staging.local. Refusing to stage delivery assets.");
+for (const line of readFileSync(stagingEnvPath, "utf8").split(/\r?\n/)) {
+  const match = /^\s*([A-Z0-9_]+)=(.*)$/.exec(line);
+  if (match) process.env[match[1]] = match[2].trim().replace(/^['\"]|['\"]$/g, "");
+}
 const execute = process.argv.includes("--execute");
 const url = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -21,6 +28,29 @@ if (
 const configuredUrl = url;
 const configuredServiceRoleKey = serviceRoleKey;
 const sha256 = (value: Buffer) => createHash("sha256").update(value).digest("hex").toUpperCase();
+const tusMetadata = (value: string) => Buffer.from(value, "utf8").toString("base64");
+
+async function uploadPrivatePdf(path: string, source: Buffer) {
+  if (source.length <= 50 * 1024 * 1024) {
+    const client = createClient(configuredUrl, configuredServiceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { error } = await client.storage.from(bucket).upload(path, source, { contentType: "application/pdf", cacheControl: "private, max-age=0", upsert: false });
+    if (error) throw new Error(`P18 upload failed for ${path}: ${error.message}`);
+    return;
+  }
+  const create = await fetch(`${configuredUrl}/storage/v1/upload/resumable`, { method: "POST", headers: { authorization: `Bearer ${configuredServiceRoleKey}`, apikey: configuredServiceRoleKey, "tus-resumable": "1.0.0", "upload-length": String(source.length), "upload-metadata": `bucketName ${tusMetadata(bucket)},objectName ${tusMetadata(path)},contentType ${tusMetadata("application/pdf")},cacheControl ${tusMetadata("private, max-age=0")}`, "x-upsert": "false" } });
+  const location = create.headers.get("location");
+  if (!create.ok || !location) throw new Error(`P18 resumable upload initialization failed for ${path} (HTTP ${create.status}).`);
+  const uploadUrl = new URL(location, configuredUrl).toString();
+  const chunkBytes = 6 * 1024 * 1024;
+  for (let offset = 0; offset < source.length;) {
+    const chunk = source.subarray(offset, Math.min(offset + chunkBytes, source.length));
+    const body = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength) as ArrayBuffer;
+    const patch = await fetch(uploadUrl, { method: "PATCH", headers: { authorization: `Bearer ${configuredServiceRoleKey}`, apikey: configuredServiceRoleKey, "tus-resumable": "1.0.0", "upload-offset": String(offset), "content-type": "application/offset+octet-stream" }, body });
+    const nextOffset = Number(patch.headers.get("upload-offset"));
+    if (!patch.ok || !Number.isInteger(nextOffset) || nextOffset <= offset) throw new Error(`P18 resumable upload failed for ${path}.`);
+    offset = nextOffset;
+  }
+}
 
 async function main() {
   const manifestErrors = validateP18StagedPackage();
@@ -53,8 +83,7 @@ async function main() {
   for (const entry of plan) {
     const source = localByPath.get(entry.file.logicalDeliveryPath)!;
     if (entry.remoteState === "missing") {
-      const { error } = await client.storage.from(bucket).upload(entry.file.logicalDeliveryPath, source, { contentType: "application/pdf", cacheControl: "private, max-age=0", upsert: false });
-      if (error) throw new Error(`P18 upload failed for ${entry.file.logicalDeliveryPath}: ${error.message}`);
+      await uploadPrivatePdf(entry.file.logicalDeliveryPath, source);
     }
     const { data: remoteBlob, error: remoteError } = await client.storage.from(bucket).download(entry.file.logicalDeliveryPath, { cacheNonce: randomUUID() });
     if (remoteError || !remoteBlob) throw new Error(`P18 remote verification failed for ${entry.file.logicalDeliveryPath}: ${remoteError?.message ?? "No object"}`);
@@ -69,7 +98,7 @@ async function main() {
     records.push({ component: entry.file.component, format: entry.file.format, sourcePath: entry.file.sourcePath, remotePrivateObjectPath: entry.file.logicalDeliveryPath, bytes: entry.file.bytes, sha256: entry.file.sha256, uploadStatus: entry.remoteState === "identical" ? "reused-identical" : "uploaded", reusedIdentical: entry.remoteState === "identical", remoteVerified: true, signedUrlVerified: true, anonymousAccessDenied: !anonymousResponse.ok });
   }
   if (records.some((record) => !record.anonymousAccessDenied)) throw new Error("P18 anonymous-access verification failed.");
-  const report: P18StorageVerificationReport = { packageVersion: "P18_V1_24_99_STAGED", bucket, generatedAt: new Date().toISOString(), records };
+  const report: P18StorageVerificationReport = { packageVersion: P18_STAGED_FULFILLMENT_VERSION, bucket, generatedAt: new Date().toISOString(), records };
   const reports = join(process.cwd(), "assets", "fulfillment", "pokopia", "complete-player-system", "reports");
   await mkdir(reports, { recursive: true });
   await writeFile(join(reports, "p18-storage-verification-latest.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");

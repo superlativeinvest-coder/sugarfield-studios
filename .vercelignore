@@ -3,6 +3,16 @@ PRODUCTS/
 !public/assets/
 !public/assets/**
 _quick_start_pdf_qa/
+_TEMP/
+assets/site/
+assets/fulfillment/pokopia/companion/
+assets/fulfillment/pokopia/completionist-kit/
+assets/fulfillment/pokopia/event-tracker/
+assets/fulfillment/pokopia/mini-tool/
+assets/fulfillment/pokopia/adventure-companion/reports/
+assets/fulfillment/pokopia/adventure-companion/*.pdf
+assets/fulfillment/pokopia/complete-player-system/reports/
+assets/fulfillment/pokopia/complete-player-system/*.pdf
 _AGENTS/
 _MARKETING/
 _SYSTEM/
@@ -13,5 +23,9 @@ prompts/
 .next-local/
 .next-local-stale*/
 .next-stale-preview/
+.next-staging/
+node_modules/
+supabase/.temp/
+supabase/supabase/
 tests/
 $

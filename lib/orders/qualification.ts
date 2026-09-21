@@ -4,10 +4,6 @@ export function isVerifiedDailyResetBuyer(order: Order | null): boolean {
   return Boolean(order?.status === "paid" && order.productId === "P06" && order.entitlements.some((entitlement) => entitlement.productId === "P06"));
 }
 
-export function isVerifiedMiniToolBuyer(order: Order | null): boolean {
-  return Boolean(order?.status === "paid" && order.productId === "P13" && order.entitlements.some((entitlement) => entitlement.productId === "P13"));
-}
-
 export function isVerifiedCompanionBuyer(order: Order | null): boolean {
   return Boolean(order?.status === "paid" && order.productId === "P16" && order.entitlements.some((entitlement) => entitlement.productId === "P16"));
 }

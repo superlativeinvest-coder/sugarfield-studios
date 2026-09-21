@@ -1,6 +1,7 @@
 export type OrderStatus = "paid";
 export type FulfillmentStatus = "pending" | "fulfilled" | "failed";
 export type OrderEntitlement = { productId: string; grantedAt: string; fulfillmentVersion?: string; stripePriceId?: string };
+export type OrderLineItem = { productId: string; sku: string; stripePriceId?: string; unitAmount: number; quantity: number; currency: string };
 
 export type Order = {
   id: string;
@@ -23,6 +24,7 @@ export type Order = {
   firstTouchAttribution?: Record<string, string>;
   currentTouchAttribution?: Record<string, string>;
   fulfillmentStatus: FulfillmentStatus;
+  lineItems?: OrderLineItem[];
   entitlements: OrderEntitlement[];
   createdAt: string;
 };
@@ -31,6 +33,7 @@ export type PaidOrderInput = Omit<Order, "id" | "status" | "fulfillmentStatus" |
 
 export interface OrderRepository {
   findById(orderId: string): Promise<Order | null>;
+  listPaidByCustomer(customerId: string): Promise<Order[]>;
   findByProviderSessionId(providerSessionId: string): Promise<Order | null>;
   findByFunnelSession(funnelSession: string): Promise<Order | null>;
   findLatestPaidByCustomerAndProduct(customerId: string, productId: string): Promise<Order | null>;

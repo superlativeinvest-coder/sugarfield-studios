@@ -1,4 +1,5 @@
 import type { PokopiaJourney } from "@/lib/pokopia-funnel/journey";
+import { isSelectedProduct } from "@/lib/pokopia-funnel/cumulative";
 import { isVerifiedDailyResetBuyer } from "@/lib/orders/qualification";
 import type { OrderRepository } from "@/lib/orders/types";
 
@@ -10,8 +11,9 @@ export function isDoubleSkip(journey: PokopiaJourney): boolean {
 // the server-loaded journey state, never from client-submitted cart data.
 export function hasCurrentJourneyP18Eligibility(journey: PokopiaJourney): boolean {
   if (isDoubleSkip(journey) || journey.p18Bypassed || journey.journeyCompleted) return false;
-  return (journey.selectedTier === "P06" && journey.dailyResetAccepted)
-    || (journey.selectedTier === "P16" && journey.companionAccepted);
+  const selected = new Set(journey.selectedProducts.filter(isSelectedProduct));
+  return (journey.dailyResetAccepted && selected.has("P06"))
+    || (journey.companionAccepted && selected.has("P16"));
 }
 
 export async function hasVerifiedHistoricalP06Ownership(repository: OrderRepository | null, customerId: string | undefined): Promise<boolean> {

@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "productId": "P18",
+  "productName": "Pokopia Complete Player System",
+  "status": "staged-not-deployed",
+  "approval": "2026-09-19 approved P16 V3 customer-delivery refresh; Event Tracker, Spawn Tracker, and Cloud Islands Planner updated; all other components unchanged",
+  "componentCount": 11,
+  "pdfCount": 22,
+  "deliveryMapStatus": "staged-not-active",
+  "storageUploadStatus": "uploaded-verified-staging",
+  "files": [
+    {
+      "component": "Daily Reset",
+      "format": "US Letter",
+      "sourceFamily": "P16-v2",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/us-letter/P06-Pokopia-Daily-Reset-US-Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P06-Pokopia-Daily-Reset-US-Letter.pdf",
+      "bytes": 4530521,
+      "sha256": "403CCC973569B58A16E872827DA0D4CFB56EDC5F69CFDECF56F21BBE248AEC1F"
+    },
+    {
+      "component": "Daily Reset",
+      "format": "A4",
+      "sourceFamily": "P16-v2",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/a4/P06-Pokopia-Daily-Reset-A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P06-Pokopia-Daily-Reset-A4.pdf",
+      "bytes": 4530553,
+      "sha256": "ED05041A3107203A97A97BBE2E45B83FD49884E7A00F85204710D445B17677D0"
+    },
+    {
+      "component": "Event Tracker",
+      "format": "US Letter",
+      "sourceFamily": "P16-v3",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/us-letter/P13-Pokopia-Event-Tracker-US-Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P13-Pokopia-Event-Tracker-US-Letter.pdf",
+      "bytes": 26672611,
+      "sha256": "2F3042641C598FF8658D943C5CA8759B941109218508BAED44F5DA4D2CFF1F98"
+    },
+    {
+      "component": "Event Tracker",
+      "format": "A4",
+      "sourceFamily": "P16-v3",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/a4/P13-Pokopia-Event-Tracker-A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P13-Pokopia-Event-Tracker-A4.pdf",
+      "bytes": 27895477,
+      "sha256": "9F9210A7D1D418067F57453128C47C627F98B6CE3DD579E5D82773A94C728AE7"
+    },
+    {
+      "component": "Spawn Tracker",
+      "format": "US Letter",
+      "sourceFamily": "P16-v3",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/us-letter/P15-Pokopia-Spawn-Tracker-US-Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P15-Pokopia-Spawn-Tracker-US-Letter.pdf",
+      "bytes": 9882341,
+      "sha256": "B876E99AFBB06133566931CF42750C28226B93062EDB35CC565F6933BE4A9BE8"
+    },
+    {
+      "component": "Spawn Tracker",
+      "format": "A4",
+      "sourceFamily": "P16-v3",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/a4/P15-Pokopia-Spawn-Tracker-A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P15-Pokopia-Spawn-Tracker-A4.pdf",
+      "bytes": 9882442,
+      "sha256": "FBEDEEB7411CF2AC6D1A3767C79FE01C4F5590D423CE24A312A4E71C1A18A6D8"
+    },
+    {
+      "component": "Cloud Islands Planner",
+      "format": "US Letter",
+      "sourceFamily": "P16-v3",
+      "sourcePath": "PRODUCTS/POKOPIA/P14_Cloud_Islands_Planner_v2/package/us-letter/pokopia-cloud-islands-planner-letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P14-Pokopia-Cloud-Islands-Planner-US-Letter.pdf",
+      "bytes": 27313125,
+      "sha256": "34ADBECE0B28CF63D0EA7AD78839E1A69AEC960F6FC24EB83834EE8D27E829DD"
+    },
+    {
+      "component": "Cloud Islands Planner",
+      "format": "A4",
+      "sourceFamily": "P16-v3",
+      "sourcePath": "PRODUCTS/POKOPIA/P14_Cloud_Islands_Planner_v2/package/a4/pokopia-cloud-islands-planner-a4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P14-Pokopia-Cloud-Islands-Planner-A4.pdf",
+      "bytes": 26300918,
+      "sha256": "A3338F668BA4D92F87982F69444A9AC11890C42741608A9FC3C12D281206A102"
+    },
+    {
+      "component": "Field Guide",
+      "format": "US Letter",
+      "sourceFamily": "P16-v2",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/us-letter/P05-Pokopia-Field-Guide-US-Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P05-Pokopia-Field-Guide-US-Letter.pdf",
+      "bytes": 40318137,
+      "sha256": "7B060DDC9B3F0FC946E4271CCA65197FC2945E19C549798CE7C2B791E216FFAF"
+    },
+    {
+      "component": "Field Guide",
+      "format": "A4",
+      "sourceFamily": "P16-v2",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/a4/P05-Pokopia-Field-Guide-A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P05-Pokopia-Field-Guide-A4.pdf",
+      "bytes": 3817282,
+      "sha256": "72799BC69CE5A0633E9CE782996952C30782A56C09DBC6A147711DB46F37D97D"
+    },
+    {
+      "component": "Adventure Dashboard",
+      "format": "US Letter",
+      "sourceFamily": "P16-v2",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/us-letter/P16-Pokopia-Adventure-Dashboard-US-Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P16-Pokopia-Adventure-Dashboard-US-Letter.pdf",
+      "bytes": 6726596,
+      "sha256": "1E6337B9B01F6B3730CBC8579C451D6A0E3189127D04B2568EAE3CEE5B7F954C"
+    },
+    {
+      "component": "Adventure Dashboard",
+      "format": "A4",
+      "sourceFamily": "P16-v2",
+      "sourcePath": "PRODUCTS/POKOPIA/P16_Adventure_Companion/package/a4/P16-Pokopia-Adventure-Dashboard-A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/P16-Pokopia-Adventure-Dashboard-A4.pdf",
+      "bytes": 6519426,
+      "sha256": "D11A0B0D5EC0B6D2FFE0E5A10857B0B6457DD6330933CB77EC949C76ECCDE7B3"
+    },
+    {
+      "component": "My Pokopia HQ",
+      "format": "US Letter",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/My_Pokopia_HQ/final/Pokopia_My_Pokopia_HQ_US_Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_My_Pokopia_HQ_US_Letter.pdf",
+      "bytes": 23435625,
+      "sha256": "9D9490884735B7AD880456CED49DA8B6D7501613F0DC8B5607241BDA6D712F01"
+    },
+    {
+      "component": "My Pokopia HQ",
+      "format": "A4",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/My_Pokopia_HQ/final/Pokopia_My_Pokopia_HQ_A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_My_Pokopia_HQ_A4.pdf",
+      "bytes": 22793255,
+      "sha256": "BE4210A0CF874E3F366BA45FE1AE6EEAED5076178091AFCBD67FD973A2AC3771"
+    },
+    {
+      "component": "Master Progress Dashboard",
+      "format": "US Letter",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Master_Progress_Dashboard/final/Pokopia_Master_Progress_Dashboard_US_Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Master_Progress_Dashboard_US_Letter.pdf",
+      "bytes": 11698965,
+      "sha256": "0B6FCBD959C19C3A7F42BFA1A3CB7786A477C50D6B6774EA7C34D0F74D288553"
+    },
+    {
+      "component": "Master Progress Dashboard",
+      "format": "A4",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Master_Progress_Dashboard/final/Pokopia_Master_Progress_Dashboard_A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Master_Progress_Dashboard_A4.pdf",
+      "bytes": 11406561,
+      "sha256": "DA30AC8A9884B830B0D4A7B45962A48AAFAE3C42F2F691359AC8A487796CD597"
+    },
+    {
+      "component": "Weekly Adventure Planner",
+      "format": "US Letter",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Weekly_Adventure_Planner/final/Pokopia_Weekly_Adventure_Planner_US_Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Weekly_Adventure_Planner_US_Letter.pdf",
+      "bytes": 15602461,
+      "sha256": "959608E7B6C9A478A815B4821ACD4CCA9B2F9EE9A133E946ECC03D21273A0286"
+    },
+    {
+      "component": "Weekly Adventure Planner",
+      "format": "A4",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Weekly_Adventure_Planner/final/Pokopia_Weekly_Adventure_Planner_A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Weekly_Adventure_Planner_A4.pdf",
+      "bytes": 15249788,
+      "sha256": "A25616C73DD7F8799AC2C6726B7A36FAB1928852C83EDEEF9E6CF55E10F5252D"
+    },
+    {
+      "component": "Resource & Inventory Planner",
+      "format": "US Letter",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Resource_And_Inventory_Planner/final/Pokopia_Resource_Inventory_Planner_US_Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Resource_Inventory_Planner_US_Letter.pdf",
+      "bytes": 17039003,
+      "sha256": "74FAC9090011C65DCD4171DE4EF9AA46F221DEF69FC82A0C5FAFBE2A4F8A6447"
+    },
+    {
+      "component": "Resource & Inventory Planner",
+      "format": "A4",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Resource_And_Inventory_Planner/final/Pokopia_Resource_Inventory_Planner_A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Resource_Inventory_Planner_A4.pdf",
+      "bytes": 16588261,
+      "sha256": "71EDB7008921CFE197D44DFBA51B2212A2376F4602C1E5D5AAC36E1447DDB3F9"
+    },
+    {
+      "component": "Completion Roadmap",
+      "format": "US Letter",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Completion_Roadmap/final/Pokopia_Completion_Roadmap_US_Letter.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Completion_Roadmap_US_Letter.pdf",
+      "bytes": 11146631,
+      "sha256": "74766064853B49566A3161379B951829BAC68C72C91CE77453E0D8DE3337DA6A"
+    },
+    {
+      "component": "Completion Roadmap",
+      "format": "A4",
+      "sourceFamily": "P18-final",
+      "sourcePath": "PRODUCTS/POKOPIA/P18_Complete_Player_System/Completion_Roadmap/final/Pokopia_Completion_Roadmap_A4.pdf",
+      "logicalDeliveryPath": "pokopia/p18-complete-player-system/P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED/Pokopia_Completion_Roadmap_A4.pdf",
+      "bytes": 11795291,
+      "sha256": "2D5F03FE77A9BB69E2F205F3E522D902511132A8536B430A2CED3F3D3ACEE68B"
+    }
+  ],
+  "packageVersion": "P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED"
+}

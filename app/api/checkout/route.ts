@@ -1,7 +1,7 @@
-import { getCheckoutProduct, isCompanionUpgradeRequest, isCompletePlayerSystemRequest, isCompletionistUpgradeRequest, isMiniToolUpgradeRequest, validateCheckoutRequest } from "@/lib/commerce/checkout";
+import { getCheckoutProduct, isCompanionUpgradeRequest, isCompletePlayerSystemRequest, isCompletionistUpgradeRequest, validateCheckoutRequest } from "@/lib/commerce/checkout";
 import type { CheckoutResponse } from "@/lib/commerce/types";
 import { getStripeClient } from "@/lib/stripe/server";
-import { isVerifiedCompanionBuyer, isVerifiedDailyResetBuyer, qualifiesForDailyResetUpgrade } from "@/lib/orders/qualification";
+import { isVerifiedCompanionBuyer, isVerifiedDailyResetBuyer } from "@/lib/orders/qualification";
 import { getOrderRepository } from "@/lib/orders/repository";
 import { canViewP17Downsell } from "@/lib/pokopia-funnel/journey";
 import { getPokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
@@ -39,20 +39,6 @@ export async function POST(request: Request): Promise<Response> {
 
   const product = getCheckoutProduct(checkoutRequest.productId);
   if (!product) return Response.json({ error: "This product is not available for checkout yet." } satisfies CheckoutResponse, { status: 503 });
-
-  if (product.id === "P13") {
-    if (!isMiniToolUpgradeRequest(checkoutRequest)) {
-      return Response.json({ error: "A verified Daily Reset order is required for this upgrade." } satisfies CheckoutResponse, { status: 403 });
-    }
-    const sourceOrderId = checkoutRequest.sourceOrderId;
-    if (!sourceOrderId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sourceOrderId)) {
-      return Response.json({ error: "A verified Daily Reset order is required for this upgrade." } satisfies CheckoutResponse, { status: 403 });
-    }
-    const repository = getOrderRepository();
-    if (!repository || !(await qualifiesForDailyResetUpgrade(repository, { orderId: sourceOrderId }))) {
-      return Response.json({ error: "A verified Daily Reset order is required for this upgrade." } satisfies CheckoutResponse, { status: 403 });
-    }
-  }
 
   const stripe = getStripeClient();
   if (!stripe) return Response.json({ error: "Stripe Checkout is not configured yet." } satisfies CheckoutResponse, { status: 503 });

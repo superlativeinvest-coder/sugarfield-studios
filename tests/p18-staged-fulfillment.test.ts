@@ -13,8 +13,12 @@ test("P18 staged package resolves exactly one hash-locked Letter/A4 pair per com
   assert.equal(files.filter((file) => file.format === "A4").length, 11);
   assert.equal(new Set(files.map((file) => file.component)).size, 11);
   assert.equal(new Set(files.map((file) => file.sha256)).size, 22);
-  assert.equal(files.filter((file) => file.sourceFamily === "P16-v2").length, 12);
+  assert.equal(files.filter((file) => file.sourceFamily === "P16-v2").length, 6);
+  assert.equal(files.filter((file) => file.sourceFamily === "P16-v3").length, 6);
   assert.equal(files.filter((file) => file.sourceFamily === "P18-final").length, 10);
+  const eventTracker = files.filter((file) => file.component === "Event Tracker");
+  assert.equal(eventTracker.length, 2);
+  assert.equal(eventTracker.every((file) => file.sourceFamily === "P16-v3"), true);
   assert.deepEqual(resolveStagedP18Entitlement({ productId: "P16", fulfillmentVersion: P18_STAGED_FULFILLMENT_VERSION }), []);
   assert.deepEqual(getProductFilePaths("P18"), []);
   assert.equal(getProductFilePaths("P18", P18_STAGED_FULFILLMENT_VERSION).length, 22);

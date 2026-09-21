@@ -49,6 +49,14 @@ button { font: inherit; }
 .action-link--primary { background: var(--purple); color: white; }
 .action-link--secondary { border: 1px solid #d8d0ef; background: #f1edff; color: var(--purple-dark); }
 .action-link--text { padding: 0; color: var(--purple); }
+.customer-library-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 32px; }
+.customer-library-grid .checkout-status-card { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.customer-library-grid .checkout-status-card h2 { margin: 0; color: var(--purple-dark); }
+.customer-library-grid .checkout-status-card p { margin: 0; color: var(--muted); }
+.customer-library-grid .action-link { margin-top: 4px; }
+.customer-downloads { display: grid; gap: 12px; width: 100%; }
+.customer-downloads .action-link { width: fit-content; }
+@media (max-width: 680px) { .customer-library-grid { grid-template-columns: 1fr; } .customer-downloads .action-link { width: 100%; } }
 
 .catalog-card,
 .collection-card {
@@ -637,4 +645,18 @@ button { font: inherit; }
   .focused-funnel[data-funnel-step="complete-player-system"] .p18-scene__callout--system { top: 3%; left: 21%; }
   .focused-funnel[data-funnel-step="complete-player-system"] .p18-scene__callout--tools { top: 10%; right: 24%; }
   .focused-funnel[data-funnel-step="complete-player-system"] .p18-scene__callout--workflow { right: 16%; bottom: 1%; }
+}
+/* Keep the low-emphasis SKIP action easy to tap on narrow screens. */
+@media (max-width: 520px) {
+  .daily-reset-hero__actions a,
+  .companion-hero__actions a,
+  .focused-funnel__skip,
+  .p18-hero__skip,
+  .completionist-hero__skip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 4px;
+    box-sizing: border-box;
+  }
 }

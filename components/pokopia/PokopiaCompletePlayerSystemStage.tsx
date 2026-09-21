@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FunnelFrame, getCurrentFunnelState, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
 import type { PokopiaFunnelOffer } from "@/data/pokopia-funnel";
 import { STORAGE_KEY } from "@/lib/attribution/capture";
@@ -48,7 +48,6 @@ export function PokopiaCompletePlayerSystemStage({ offer, sourceOrderId, cumulat
   const [status, setStatus] = useState<string | null>(null);
   const cumulative = useCumulativeJourney(cumulativeEnabled);
   const checkoutReady = Boolean(offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && offer.stripePriceId && state);
-  useEffect(() => { void fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "p18_viewed", sourceOrderId }) }); }, [sourceOrderId]);
   async function buy() {
     if (cumulativeEnabled) { if (!p18Ready) { setStatus("Complete Player System checkout remains unavailable until its approved Stripe price and delivery manifest are configured."); return; } const result = await cumulative.act("p18_accepted"); if (result.nextRoute) window.location.assign(result.nextRoute); else setStatus(result.error ?? "Checkout is unavailable right now."); return; }
     if (!checkoutReady || !state || !offer.catalogProductId) { setStatus("Complete Player System purchasing is not available yet."); return; }
@@ -73,8 +72,8 @@ export function PokopiaCompletePlayerSystemStage({ offer, sourceOrderId, cumulat
         <div className="p18-hero__price"><span className="p18-hero__regular-label">REGULAR PRICE</span><span className="p18-hero__regular">${offer.regularPrice?.toFixed(2)}</span><strong>${offer.funnelPrice?.toFixed(2)}</strong><em>LAUNCH PRICE</em><small>ONE-TIME PURCHASE<br />11 CONNECTED TOOLS<br />US LETTER + A4 PDFs</small></div>
         <ul className="p18-hero__chips" aria-label="Complete Player System highlights"><li><span>⌂</span>MY POKOPIA HQ</li><li><span>✦</span>11 CONNECTED TOOLS</li><li><span>▤</span>US LETTER + A4</li><li><span>↓</span>INSTANT ACCESS</li></ul>
         <ul className="p18-hero__benefits"><li>My Pokopia HQ 3-page control center</li><li>Daily, weekly, and long-term planning tools</li><li>Master progress, roadmap, and resource tracking</li><li>Field guide, trackers, build planning, and dashboard</li><li>Instant digital access</li></ul>
-        {cumulativeEnabled && cumulative.journey && (cumulative.journey.selectedTier === "P06" || cumulative.journey.selectedTier === "P16") && <FunnelCartSummary journey={cumulative.journey} label="Complete Player System upgrade" deltaCents={cumulative.journey.selectedTier === "P16" ? 500 : 2000} newTotalCents={2499} />}
-        <div className="p18-hero__actions"><button className="action-link action-link--primary" type="button" onClick={buy} disabled={cumulativeEnabled ? !p18Ready || !cumulative.ready : !checkoutReady}>{cumulativeEnabled ? (p18Ready ? `UPGRADE TO COMPLETE PLAYER SYSTEM — +${cumulative.journey?.selectedTier === "P16" ? "5.00" : "20.00"}` : "COMPLETE PLAYER SYSTEM UNAVAILABLE") : checkoutReady ? "ADD COMPLETE PLAYER SYSTEM TO MY SETUP" : "COMPLETE PLAYER SYSTEM UNAVAILABLE"}</button><button className="p18-hero__skip" type="button" onClick={skip} disabled={cumulativeEnabled && !cumulative.ready}>No thanks, finish my setup</button></div>
+        {cumulativeEnabled && cumulative.journey && <FunnelCartSummary journey={cumulative.journey} label="Add Complete Player System" deltaCents={2499} newTotalCents={cumulative.journey.currentTotalCents + 2499} />}
+        <div className="p18-hero__actions"><button className="action-link action-link--primary" type="button" onClick={buy} disabled={cumulativeEnabled ? !p18Ready || !cumulative.ready : !checkoutReady}>{cumulativeEnabled ? (p18Ready ? "BUY" : "COMPLETE PLAYER SYSTEM UNAVAILABLE") : checkoutReady ? "BUY" : "COMPLETE PLAYER SYSTEM UNAVAILABLE"}</button><button className="p18-hero__skip" type="button" onClick={skip} disabled={cumulativeEnabled && !cumulative.ready}>SKIP</button></div>
         {status && <p className="focused-funnel__status" role="status">{status}</p>}{!checkoutReady && <p className="focused-funnel__status">Complete Player System purchasing is not available yet.</p>}
         <p className="p18-hero__digital">DIGITAL DOWNLOAD · NO PHYSICAL ITEM SHIPS</p>
       </div>

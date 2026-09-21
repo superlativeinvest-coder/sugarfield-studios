@@ -25,10 +25,6 @@ export function getCheckoutProduct(productId: string) {
   return products.find((product) => product.id === productId && product.commerce?.active === true && Boolean(product.commerce.stripePriceId));
 }
 
-export function isMiniToolUpgradeRequest(request: CheckoutRequest): boolean {
-  return request.productId === "P13" && request.offerId === "pokopia_mini_tool" && request.sku === "P13" && request.upgrade === true && request.funnelStep === "mini_tool" && Boolean(request.sourceOrderId);
-}
-
 export function isCompanionUpgradeRequest(request: CheckoutRequest): boolean {
   return request.productId === "P16" && request.offerId === "pokopia_companion" && (request.sku === "P16" || request.sku === "pokopia_adventure_companion") && request.upgrade === false && request.funnelStep === "companion";
 }

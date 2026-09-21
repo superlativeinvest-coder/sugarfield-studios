@@ -1,13 +1,13 @@
-import manifestJson from "@/assets/fulfillment/pokopia/complete-player-system/p18-staged-delivery-manifest-20260913.json";
+import manifestJson from "@/assets/fulfillment/pokopia/complete-player-system/p18-staged-delivery-manifest-20260919-p16-v3-refresh.json";
 import type { Entitlement } from "./types";
 
-export const P18_STAGED_FULFILLMENT_VERSION = "P18_V1_24_99_STAGED";
+export const P18_STAGED_FULFILLMENT_VERSION = "P18_V4_24_99_CUSTOMER_DELIVERY_REFRESH_20260919_STAGED";
 export const P18_ENTITLEMENT_PRODUCT_ID = "P18";
 
 export type P18StagedFile = {
   component: string;
   format: "US Letter" | "A4";
-  sourceFamily: "P16-v2" | "P18-final";
+  sourceFamily: "P16-v2" | "P16-v3" | "P18-final" | "P13-v4.3" | "P13-approved-20260918";
   sourcePath: string;
   logicalDeliveryPath: string;
   bytes: number;
@@ -19,7 +19,7 @@ type P18StagedManifest = {
   componentCount: number;
   pdfCount: number;
   deliveryMapStatus: "staged-not-active";
-  storageUploadStatus: "not-uploaded";
+  storageUploadStatus: "not-uploaded" | "uploaded-verified-staging";
   files: P18StagedFile[];
 };
 
