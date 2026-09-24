@@ -56,6 +56,15 @@ button { font: inherit; }
 .customer-library-grid .action-link { margin-top: 4px; }
 .customer-downloads { display: grid; gap: 12px; width: 100%; }
 .customer-downloads .action-link { width: fit-content; }
+.auth-section { background: var(--cream); }
+.auth-card { max-width: 620px; padding: clamp(24px, 5vw, 52px); border: 1px solid var(--line); border-radius: var(--radius-lg); background: white; box-shadow: var(--shadow-card); }
+.auth-card h1 { margin: 0; color: var(--purple-dark); font-size: clamp(2.4rem, 6vw, 4.4rem); line-height: .98; letter-spacing: -.06em; }
+.auth-form { display: grid; gap: 10px; margin: 30px 0 18px; }
+.auth-form input { min-height: 52px; border: 1px solid #dacfb7; border-radius: 12px; padding: 14px 16px; background: white; font: inherit; }
+.auth-form button { min-height: 52px; border: 0; border-radius: 12px; background: var(--purple); color: white; cursor: pointer; font-weight: 900; }
+.auth-form button:disabled { cursor: wait; opacity: .65; }
+.auth-status { margin: 4px 0 0; color: var(--purple-dark); font-size: .9rem; line-height: 1.5; }
+.auth-status--error { color: #a32929; }
 @media (max-width: 680px) { .customer-library-grid { grid-template-columns: 1fr; } .customer-downloads .action-link { width: 100%; } }
 
 .catalog-card,

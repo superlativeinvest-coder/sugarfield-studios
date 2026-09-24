@@ -5,6 +5,8 @@ import { getStripeClient } from "@/lib/stripe/server";
 import { getQuickStartStripePriceId, getStripeWebhookSecret } from "@/lib/stripe/configuration";
 import { P16_V3_FULFILLMENT_VERSION } from "@/lib/delivery/service";
 import { P18_STAGED_FULFILLMENT_VERSION } from "@/lib/delivery/p18-staged";
+import { P18_PRODUCTION_FULFILLMENT_VERSION } from "@/lib/delivery/p18-production";
+import { classifySupabaseTarget } from "@/lib/supabase/environment";
 import { getCanonicalP18StripePriceId } from "@/lib/stripe/configuration";
 import { getOrCreatePokopiaJourney, recordPokopiaJourneyEvent, updatePokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
 import { supabaseCustomerIdFromStripeMetadata } from "@/lib/customer/stripe-binding";
@@ -50,7 +52,8 @@ export async function POST(request: Request): Promise<Response> {
     const stripeItems = verifiedSession.line_items?.data ?? [];
     if (stripeItems.length !== expectedItems.length || !expectedItems.every((expected) => stripeItems.some((item) => { const price = typeof item.price === "string" ? undefined : item.price; return item.quantity === 1 && price?.id === expected.stripePriceId && price?.unit_amount === expected.unitAmount && price.currency === "usd"; }))) return Response.json({ error: "Accumulated checkout line items are invalid." }, { status: 400 });
     const grantedAt = new Date().toISOString();
-    const entitlementFor = (productId: typeof selectedProducts[number]) => ({ productId, grantedAt, ...(productId === "P16" ? { fulfillmentVersion: P16_V3_FULFILLMENT_VERSION } : {}), ...(productId === "P18" ? { fulfillmentVersion: P18_STAGED_FULFILLMENT_VERSION } : {}), stripePriceId: expectedItems.find((item) => item.productId === productId)?.stripePriceId });
+    const p18FulfillmentVersion = classifySupabaseTarget(process.env.SUPABASE_URL) === "PRODUCTION" ? P18_PRODUCTION_FULFILLMENT_VERSION : P18_STAGED_FULFILLMENT_VERSION;
+    const entitlementFor = (productId: typeof selectedProducts[number]) => ({ productId, grantedAt, ...(productId === "P16" ? { fulfillmentVersion: P16_V3_FULFILLMENT_VERSION } : {}), ...(productId === "P18" ? { fulfillmentVersion: p18FulfillmentVersion } : {}), stripePriceId: expectedItems.find((item) => item.productId === productId)?.stripePriceId });
     const { order } = await createOrderIdempotently(repository, { provider: "stripe", providerSessionId: session.id, providerEventId: event.id, paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : undefined, productId: selectedProducts[0], offerId: "pokopia_accumulated_order", sku: expectedItems[0].sku, amountTotal: session.amount_total ?? undefined, currency: session.currency ?? undefined, customerEmail: session.customer_details?.email ?? session.customer_email ?? undefined, customerId, funnelId: "pokopia_daily_reset", funnelStep: "checkout", funnelSession: session.metadata?.funnel_session_id, fulfillmentStatus: "fulfilled", lineItems: expectedItems.map((item) => ({ productId: item.productId, sku: item.sku, stripePriceId: item.stripePriceId, unitAmount: item.unitAmount, quantity: 1, currency: item.currency })), entitlements: selectedProducts.map(entitlementFor), createdAt: grantedAt });
     const completed = { ...journey, dailyResetPurchased: journey.dailyResetPurchased || selectedProducts.includes("P06"), companionPurchased: journey.companionPurchased || selectedProducts.includes("P16"), p18Purchased: journey.p18Purchased || selectedProducts.includes("P18"), p17Purchased: journey.p17Purchased || selectedProducts.includes("P17"), checkoutCompleted: true, journeyCompleted: true, currentStep: "complete", completedAt: journey.completedAt ?? grantedAt };
     await updatePokopiaJourney(journeyId, completed);
@@ -68,7 +71,8 @@ export async function POST(request: Request): Promise<Response> {
   if (productId === "P18" && (stripePriceId !== getCanonicalP18StripePriceId() || session.amount_total !== 2499 || session.currency !== "usd")) return Response.json({ error: "P18 payment does not match the canonical package." }, { status: 400 });
   // Existing P16 entitlements keep their recorded V2 mapping. Only newly
   // completed P16 orders receive the staged V3 customer-delivery package.
-  const fulfillmentVersion = productId === "P16" && stripePriceId === process.env.STRIPE_ADVENTURE_COMPANION_PRICE_ID ? P16_V3_FULFILLMENT_VERSION : productId === "P18" ? P18_STAGED_FULFILLMENT_VERSION : undefined;
+  const p18FulfillmentVersion = classifySupabaseTarget(process.env.SUPABASE_URL) === "PRODUCTION" ? P18_PRODUCTION_FULFILLMENT_VERSION : P18_STAGED_FULFILLMENT_VERSION;
+  const fulfillmentVersion = productId === "P16" && stripePriceId === process.env.STRIPE_ADVENTURE_COMPANION_PRICE_ID ? P16_V3_FULFILLMENT_VERSION : productId === "P18" ? p18FulfillmentVersion : undefined;
   const { order } = await createOrderIdempotently(repository, {
     provider: "stripe",
     providerSessionId: session.id,

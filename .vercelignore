@@ -1,5 +1,5 @@
 # Source materials and QA artifacts are not part of the Next.js runtime.
-PRODUCTS/
+/PRODUCTS/
 !public/assets/
 !public/assets/**
 _quick_start_pdf_qa/

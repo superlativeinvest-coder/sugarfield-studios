@@ -1,8 +1,10 @@
 import type { DeliveryProvider, Entitlement, SecureDownload } from "./types";
 import { P18_STAGED_FULFILLMENT_VERSION, getStagedP18PackageFiles } from "./p18-staged";
+import { P18_PRODUCTION_FULFILLMENT_VERSION, getProductionP18PackageFiles } from "./p18-production";
 import { P16_V3_FULFILLMENT_VERSION, getP16V3PackageFiles } from "./p16-v3-staged";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getQuickStartFile, type QuickStartFileId } from "@/lib/quick-start/manifest";
+import { classifySupabaseTarget } from "@/lib/supabase/environment";
 
 export function getDeliveryProvider(): DeliveryProvider | null {
   return getSupabaseServerClient() ? new SupabaseStorageDeliveryProvider() : null;
@@ -10,7 +12,7 @@ export function getDeliveryProvider(): DeliveryProvider | null {
 
 const productFiles: Record<string, string[]> = {
   P06: ["pokopia/daily-reset/pokopia-daily-reset-checklist-a4.pdf", "pokopia/daily-reset/pokopia-daily-reset-checklist-print-2026-05.pdf"],
-  P13: [
+  P13_STAGED: [
     // P13 standalone delivery reuses the approved 2026-09-18 Event Tracker
     // objects already verified in the staged P16 V3 package. The legacy
     // mini-tool path is retained only in historical manifests.
@@ -21,6 +23,11 @@ const productFiles: Record<string, string[]> = {
   P17: ["pokopia/completionist-kit/v2-corrected-20260908/Pokopia-Field-Guide-US-Letter.pdf", "pokopia/completionist-kit/v2-corrected-20260908/Pokopia-Field-Guide-A4.pdf", "pokopia/completionist-kit/v2-corrected-20260908/Pokopia-26-Card-Reference-Collection.pdf", "pokopia/completionist-kit/v2-corrected-20260908/README.md"],
   "FREE-QUICK-START": ["pokopia/quick-start/final-scope-20260909/Pokopia_Quick_Start_Pack_US_Letter.pdf", "pokopia/quick-start/final-scope-20260909/Pokopia_Quick_Start_Pack_A4.pdf"],
 };
+
+const p13ProductionFiles = [
+  "pokopia/event-tracker/P13_V4.3_APPROVED_20260918/P13-Pokopia-Event-Tracker-A4.pdf",
+  "pokopia/event-tracker/P13_V4.3_APPROVED_20260918/P13-Pokopia-Event-Tracker-US-Letter.pdf",
+];
 
 export const P16_LEGACY_FULFILLMENT_VERSION = "P16_LEGACY_7_99";
 export const P16_V2_FULFILLMENT_VERSION = "P16_V2_19_99";
@@ -46,6 +53,8 @@ export function getProductFilePaths(productId: string, fulfillmentVersion?: stri
   // This versioned map is intentionally unreachable until the P18 feature
   // gates and a verified webhook grant are enabled in a later promotion.
   if (productId === "P18" && fulfillmentVersion === P18_STAGED_FULFILLMENT_VERSION) return getStagedP18PackageFiles().map((file) => file.logicalDeliveryPath);
+  if (productId === "P18" && fulfillmentVersion === P18_PRODUCTION_FULFILLMENT_VERSION) return getProductionP18PackageFiles().map((file) => file.logicalDeliveryPath);
+  if (productId === "P13") return classifySupabaseTarget(process.env.SUPABASE_URL) === "PRODUCTION" ? [...p13ProductionFiles] : [...productFiles.P13_STAGED];
   return productFiles[productId] ? [...productFiles[productId]] : [];
 }
 
