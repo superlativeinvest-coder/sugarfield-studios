@@ -127,3 +127,24 @@ Before any production deployment, record:
 - No production smoke test or payment has been run.
 - Preview remains the only active stakeholder-review target.
 - Production aliases, production Supabase, live Stripe, production storage, and deployment state remain untouched.
+
+## Post-release staging verification — 2026-09-24
+
+The post-release fulfillment and authorization checks were run against the existing Vercel Preview with Stripe Test Mode. No real-money payment, live Stripe replay, production storage write, production database write, or production configuration change was performed.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Staging readiness | PASS | `npm.cmd run staging:check`; staging Supabase `faxsnbdjzniwyhtnsvfz`, Stripe key classified TEST, all cumulative price IDs present |
+| Regression suite | PASS | `npm.cmd test`; 36/36 tests passed |
+| Test Checkout Session | PASS | Redacted session `cs_test_…GBaa1g`; Stripe Test Mode reports `paid`, USD 49.97 |
+| Webhook event | PASS | Redacted event `evt_1UHZZ…pqb`; type `checkout.session.completed` |
+| Webhook replay | PASS (prior approved staging evidence) | Existing staging P13/P16 replay checks returned the same order and did not duplicate entitlements; replay of this exact accumulated-order event was not sent through the SSO-protected Preview |
+| Durable order | PASS | Order `d491993e-74e3-4c95-b2ed-f33a46928d94`; one row for the session, `fulfilled` |
+| Canonical line items | PASS | P06 ×1 ($4.99), P16 ×1 ($19.99), P18 ×1 ($24.99); total $49.97 |
+| Entitlement idempotency | PASS | Exactly one entitlement each for P06, P16, and P18 in the durable order |
+| Authorized downloads | PASS | Preview Library generated private-bucket signed downloads for P06, P16, P18, P17, and standalone P13 entitlements |
+| Non-entitled product | PASS | Authenticated request for P17 on the P06/P16/P18 order returned HTTP 403 |
+| Preview log monitoring | PASS | Vercel Preview logs show HTTP 200 for authorized P06/P16/P18/P13/P17 requests and HTTP 403 for the non-entitled request; no observed 5xx in the reviewed window |
+| Unauthenticated/wrong-customer denial | PASS (prior approved evidence) | Existing staging Security approval records app-level 401 and wrong-customer 403; no production test was run |
+
+The existing approved staging security evidence remains the authority for unauthenticated and wrong-customer cases. Signed URLs were inspected only for host/path provenance and were not persisted in this report. Production live payment, live webhook fulfillment, and production authorized-download checks remain intentionally pending because they would require a controlled live transaction or an already fulfilled production account.
