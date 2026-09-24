@@ -1,7 +1,10 @@
 import type { PokopiaSelectedProduct } from "@/lib/pokopia-funnel/cumulative";
 
 export type PokopiaJourney = {
-  journeyId: string; funnelSessionId?: string; customerId?: string; quickStartClaimed: boolean;
+  journeyId: string; funnelSessionId?: string; customerId?: string; leadEmail?: string;
+  quickStartDeliveryStatus?: "pending" | "queued" | "sent" | "failed" | "not_configured";
+  quickStartDeliveryRequestedAt?: string; quickStartDeliveryCompletedAt?: string; quickStartDeliveryFailedAt?: string; quickStartDeliveryError?: string;
+  quickStartClaimed: boolean;
   dailyResetViewed: boolean; dailyResetPurchased: boolean; dailyResetSkipped: boolean;
   companionViewed: boolean; companionPurchased: boolean; companionSkipped: boolean;
   p18Eligible: boolean; p18QualifiedView: boolean; p18Bypassed: boolean; p18Viewed: boolean; p18Purchased: boolean; p18Skipped: boolean;
