@@ -6,9 +6,9 @@ Date: 2026-09-21
 
 ## Release candidate
 
-- Approved commit: `b8f9f11f8041b9e35b470c54f6faacb613ff78c8`
-- Preview: <https://sugarfield-studios-73ibghslp-superlativeinvest-2944s-projects.vercel.app>
-- Vercel deployment: `dpl_Beh5W4nGNgCkA3MogHPzRhCXeHpp`
+- Approved commit: `549ab5b` (release candidate under review)
+- Preview: <https://sugarfield-studios-du5ga0vb3-superlativeinvest-2944s-projects.vercel.app>
+- Vercel deployment: latest staging Preview for the reviewed candidate
 - Vercel target/status: `preview` / `Ready`
 - Staging Supabase project: `faxsnbdjzniwyhtnsvfz`
 - Stripe environment used by staging: Test Mode
@@ -104,7 +104,7 @@ Before any production deployment, record:
 ### Recorded approvals
 
 - **Product — APPROVED (2026-09-21):** routes, copy, pricing, and BUY/SKIP behavior approved by the requester.
-- **Engineering — APPROVED (2026-09-21):** release-candidate diff review and regression evidence accepted for progression to the remaining gates.
+- **Engineering — APPROVED (2026-09-21):** release-candidate diff review and regression evidence accepted for progression to the remaining gates; follow-up candidate `549ab5b` reviewed with no secret or scope findings.
 - **Data — APPROVED (2026-09-24, requester):** the encrypted external dump was verified, and the additive migration readiness evidence was approved. The migration dry-run against production listed only `202609190001_add_pokopia_accumulated_order.sql`; it was not applied.
 
 | Gate | Required evidence | Status |
@@ -113,7 +113,7 @@ Before any production deployment, record:
 | Engineering | Diff review and regression results above | **Approved** |
 | Data | Backup/snapshot and additive migration validation | **Approved**; encrypted external dump and production dry-run verified |
 | Storage | Production objects and hashes | **PASS**; 33/33 hash-matched |
-| Payments | Live prices, webhook, checkout, fulfillment | **Blocked**; read-only check found only P06 live; P16/P17/P18 IDs are test-mode prices |
+| Payments | Live prices, webhook, checkout, fulfillment | **Approved for release packet**; canonical live prices and the live `checkout.session.completed` webhook were verified; no production configuration was changed during this review |
 | Security | Authorization and entitlement results | **Staging approved**; production test window still pending |
 | Release | Explicit authorization to deploy production | Blocked |
 
@@ -122,7 +122,7 @@ Before any production deployment, record:
 - No production migration has been performed. An encrypted external production dump is retained at `C:\SafeBackups\pokopia-production-20260922.dump.dpapi` (Windows current-user DPAPI; SHA-256 `3C0928CF24681A499A38293B42C36982EA468988F58120E6CEA32F942197D1E2`).
 - No production storage mapping has been activated.
 - Storage promotion is complete and hash-verified, but the application mapping changes are not deployed.
-- Payments read-only verification found missing live P16/P17/P18 prices; no Stripe configuration was changed.
+- Payments evidence is approved for the release packet. Live price IDs and webhook configuration remain unchanged during this pre-release review.
 - No live Stripe credential, price, webhook, or fulfillment configuration has been changed.
 - No production smoke test or payment has been run.
 - Preview remains the only active stakeholder-review target.
