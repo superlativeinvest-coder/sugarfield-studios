@@ -148,3 +148,5 @@ The post-release fulfillment and authorization checks were run against the exist
 | Unauthenticated/wrong-customer denial | PASS (prior approved evidence) | Existing staging Security approval records app-level 401 and wrong-customer 403; no production test was run |
 
 The existing approved staging security evidence remains the authority for unauthenticated and wrong-customer cases. Signed URLs were inspected only for host/path provenance and were not persisted in this report. Production live payment, live webhook fulfillment, and production authorized-download checks remain intentionally pending because they would require a controlled live transaction or an already fulfilled production account.
+
+**Residual-risk acceptance (2026-09-24, requester):** The requester explicitly accepts the remaining risk that a live payment and end-to-end production fulfillment transaction were not exercised. The production deployment may remain customer-facing under monitoring; this acceptance authorizes no additional production configuration or data changes.
