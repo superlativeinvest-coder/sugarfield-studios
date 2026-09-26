@@ -1,4 +1,4 @@
-import { CHECKOUT_SCHEMA_VERSION, createCheckoutFingerprint, getCanonicalLineItems, getP18Readiness, getSelectedTotalCents, hasPaidSelection, isCumulativeCheckoutEnabled, stripeSessionMatchesFingerprint } from "@/lib/pokopia-funnel/cumulative";
+import { CHECKOUT_SCHEMA_VERSION, createCheckoutFingerprint, getCanonicalLineItems, getCheckoutDisplayLineItems, getP18Readiness, getSelectedTotalCents, hasPaidSelection, isCumulativeCheckoutEnabled, stripeSessionMatchesFingerprint } from "@/lib/pokopia-funnel/cumulative";
 import { getPokopiaJourney, updatePokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
 import { getStripeClient } from "@/lib/stripe/server";
 import { getCustomerSession } from "@/lib/customer/session";
@@ -11,6 +11,7 @@ export async function POST(request: Request): Promise<Response> {
   const journeyId = journeyIdFor(request); const journey = journeyId ? await getPokopiaJourney(journeyId) : null;
   if (!journey || journey.checkoutCompleted || !hasPaidSelection(journey)) return Response.json({ error: "A paid Pokopia selection is required before checkout." }, { status: 403 });
   const items = getCanonicalLineItems(journey.selectedProducts);
+  const checkoutItems = getCheckoutDisplayLineItems(journey.selectedProducts, journey.quickStartClaimed);
   if (!items.length) return Response.json({ error: "No paid products are selected." }, { status: 403 });
   if (items.some((item) => !item.stripePriceId)) return Response.json({ error: "A selected staging price is not configured." }, { status: 503 });
   if (journey.selectedProducts.includes("P18")) { const readiness = getP18Readiness(); if (!readiness.ready) return Response.json({ error: readiness.reason }, { status: 503 }); }
@@ -30,7 +31,9 @@ export async function POST(request: Request): Promise<Response> {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: items.map((item) => ({ price: item.stripePriceId!, quantity: 1 })),
+      line_items: checkoutItems.map((item) => item.productId === "FREE-QUICK-START"
+        ? item.stripePriceId ? { price: item.stripePriceId, quantity: 1 } : { price_data: { currency: "usd", unit_amount: 0, product_data: { name: "Free Quick Start Pack" } }, quantity: 1 }
+        : { price: item.stripePriceId!, quantity: 1 }),
       success_url: `${siteUrl}/pokopia/funnel/complete?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/pokopia/funnel/checkout`,
       metadata: {
@@ -45,6 +48,7 @@ export async function POST(request: Request): Promise<Response> {
         checkout_fingerprint: fingerprint,
         checkout_schema_version: CHECKOUT_SCHEMA_VERSION,
         canonical_total_cents: String(totalCents),
+        free_pack_claimed: String(journey.quickStartClaimed),
         ...supabaseCustomerMetadataForStripe(customerSession.customer.id),
       },
     });

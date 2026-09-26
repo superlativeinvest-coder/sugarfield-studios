@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addProductSelection, CANONICAL_SELECTION_ORDER, CHECKOUT_SCHEMA_VERSION, createCheckoutFingerprint, getCanonicalLineItems, getSelectedTotalCents, normalizeSelectedProducts } from "@/lib/pokopia-funnel/cumulative";
+import { addProductSelection, CANONICAL_SELECTION_ORDER, CHECKOUT_SCHEMA_VERSION, createCheckoutFingerprint, getCanonicalLineItems, getCheckoutDisplayLineItems, getSelectedTotalCents, normalizeSelectedProducts } from "@/lib/pokopia-funnel/cumulative";
 import { emptyPokopiaJourney } from "@/lib/pokopia-funnel/journey";
 
 test("canonical selections are deduplicated and ordered", () => {
@@ -13,6 +13,13 @@ test("accumulated totals use only canonical server prices", () => {
   assert.equal(getSelectedTotalCents(["P16", "P18"]), 4498);
   assert.equal(getSelectedTotalCents(["P06"]), 499);
   assert.deepEqual(getCanonicalLineItems(["P06", "P16", "P18"]).map((item) => item.productId), ["P06", "P16", "P18"]);
+});
+
+test("checkout display can include the free pack without changing the paid total", () => {
+  const items = getCheckoutDisplayLineItems(["P06", "P16"], true);
+  assert.deepEqual(items.map((item) => item.productId), ["FREE-QUICK-START", "P06", "P16"]);
+  assert.equal(items[0].unitAmount, 0);
+  assert.equal(getSelectedTotalCents(["P06", "P16"]), 2498);
 });
 test("repeated BUY is idempotent and SKIP has no removal primitive", () => {
   const once = addProductSelection(emptyPokopiaJourney("journey"), "P06");
