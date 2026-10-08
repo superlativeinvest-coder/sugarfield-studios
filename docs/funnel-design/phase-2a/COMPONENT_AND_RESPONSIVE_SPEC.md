@@ -9,7 +9,7 @@
 
 ## Proposed presentational composition for Phase 2B
 
-Use presentational sections only: `QuickStartHero`, `QuickStartProblemStrip`, `QuickStartPreviewGallery`, `QuickStartAccessSteps`, `QuickStartBenefits`, and `QuickStartFinalCta`. They consume existing event handlers and assets; they do not own API calls, cookies, storage, pricing, or route logic.
+Use presentational sections only: `QuickStartHero`, `QuickStartProblemStrip`, `QuickStartPreviewGallery`, `QuickStartAccessSteps`, `QuickStartBenefits`, and `QuickStartFinalCta`. They consume existing event handlers and assets; they do not own API calls, cookies, storage, pricing, or route logic. `QuickStartFinalCta` is a button/link only: it scrolls to the existing hero email input, moves focus there, and must not submit, clear input, or emit a signup event.
 
 ## Breakpoint rules
 

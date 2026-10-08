@@ -9,6 +9,8 @@
 - [ ] Accept the documented gap: no approved preview artwork for pages six and seven.
 - [ ] Approve proposed recovery prominence and final-CTA focus behavior.
 - [ ] Approve static mockup art direction and responsive specifications.
+- [ ] Confirm the final CTA is one button that returns focus to the original signup form; no second form is shown or implemented.
+- [ ] Confirm the compact footer preview visibly matches the approved funnel footer content.
 - [ ] Confirm no changes to consent, analytics, signup, API, recovery, checkout, fulfillment, or entitlement logic.
 - [ ] Confirm no live delivery, payment, customer, or production validation is implied by the design blueprint.
 

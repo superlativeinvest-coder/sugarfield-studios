@@ -7,7 +7,7 @@
 3. **What’s inside:** A five-page approved-artwork gallery with page names and concise supported uses.
 4. **How access works:** Enter email → claim the guide → access Letter/A4 PDFs when access is available. No email-timing promise.
 5. **Why useful:** Supported outcomes tied to the actual pages: session focus, daily priorities, sketching, and notes.
-6. **Final CTA:** Same message and CTA; implementation scrolls/focuses the existing hero form, preserving one submission implementation and analytics event sequence.
+6. **Final CTA:** One button, not a second email form; implementation scrolls to and focuses the existing hero form while preserving its input, one submission implementation, and analytics event sequence.
 7. **Compact footer:** Existing fan-made disclaimer and privacy/terms links.
 
 ## Verified page references
