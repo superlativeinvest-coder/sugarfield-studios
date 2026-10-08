@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 const CONSENT_KEY = "sugarfield_consent_v1";
 const widths = [320, 360, 375, 390, 430, 768, 820, 1120, 1440];
 const routes = [
-  { name: "Start", path: "/pokopia/start", cta: "GET THE FREE QUICK START PACK" },
+  { name: "Start", path: "/pokopia/start", cta: "GET MY FREE QUICK START" },
   { name: "P06", path: "/pokopia/daily-reset", cta: "BUY" },
   { name: "P16", path: "/pokopia/companion", cta: "BUY" },
   { name: "P18", path: "/pokopia/complete-player-system?preview=1", cta: "BUY", selector: ".p18-hero__actions .action-link--primary" },
@@ -109,7 +109,7 @@ test.describe("Phase 2A.2 rendered error announcements", () => {
     await chooseConsent(page, "Reject advertising");
     const form = page.locator(".quick-start-hero form");
     await form.getByLabel("Email address").fill("synthetic@example.test");
-    await form.getByRole("button", { name: "GET THE FREE QUICK START PACK", exact: true }).focus();
+    await form.getByRole("button", { name: "GET MY FREE QUICK START", exact: true }).focus();
     await page.keyboard.press("Enter");
     await expect(form.getByRole("alert")).toHaveCount(1);
     await expect(form.getByRole("alert")).toHaveText("Synthetic signup failure.");
