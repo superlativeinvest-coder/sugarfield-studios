@@ -42,9 +42,9 @@ export function ConsentBanner() {
   const undecided = consent.advertising === "unknown";
 
   return (
-    <aside className="consent-control" aria-label="Privacy choices">
+    <aside className={`consent-control${undecided || open ? " consent-control--panel" : " consent-control--manage"}`} aria-label="Privacy choices">
       {undecided || open ? (
-        <div className="consent-control__panel" role="dialog" aria-labelledby="consent-title" aria-describedby="consent-description">
+        <div className="consent-control__panel" role="region" aria-labelledby="consent-title" aria-describedby="consent-description">
           <p className="eyebrow">Privacy choices</p>
           <h2 id="consent-title">Choose how advertising works</h2>
           <p id="consent-description">Sugarfield&apos;s first-party operational analytics continue separately. The TikTok advertising Pixel loads only if you allow advertising cookies.</p>
