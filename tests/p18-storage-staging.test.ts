@@ -24,3 +24,10 @@ test("P18 storage report is complete and never persists signed URLs", () => {
   assert.deepEqual(validateP18StorageVerificationReport({ packageVersion: P18_STAGED_FULFILLMENT_VERSION, bucket: "digital-products", generatedAt: "2026-09-13T00:00:00.000Z", records }), []);
   assert.ok(validateP18StorageVerificationReport({ packageVersion: P18_STAGED_FULFILLMENT_VERSION, bucket: "digital-products", generatedAt: "2026-09-13T00:00:00.000Z", records: [{ ...records[0], signedUrl: "must-not-persist" } as never, ...records.slice(1)] }).length > 0);
 });
+
+test("P18 storage report requires every hash-locked manifest path exactly once", () => {
+  const records = getStagedP18PackageFiles().map((file) => ({ component: file.component, format: file.format, sourcePath: file.sourcePath, remotePrivateObjectPath: file.logicalDeliveryPath, bytes: file.bytes, sha256: file.sha256, uploadStatus: "reused-identical" as const, reusedIdentical: true, remoteVerified: true, signedUrlVerified: true, anonymousAccessDenied: true }));
+  assert.equal(new Set(records.map((record) => record.remotePrivateObjectPath)).size, 22);
+  assert.equal(new Set(records.map((record) => record.component)).size, 11);
+  assert.deepEqual(validateP18StorageVerificationReport({ packageVersion: P18_STAGED_FULFILLMENT_VERSION, bucket: "digital-products", generatedAt: "2026-10-06T00:00:00.000Z", records }), []);
+});

@@ -50,7 +50,10 @@ report("STRIPE_P18_COMPLETE_PLAYER_SYSTEM_PRICE_ID", values.STRIPE_P18_COMPLETE_
 if (mode(values.STRIPE_SECRET_KEY) === "LIVE") failures.push("A live Stripe secret key is configured for staging.");
 if (mode(values.STRIPE_SECRET_KEY) !== "TEST") failures.push("STRIPE_SECRET_KEY must be a Stripe test secret.");
 if (!values.STRIPE_WEBHOOK_SECRET) failures.push("STRIPE_WEBHOOK_SECRET is required for webhook verification.");
-for (const key of ["STRIPE_DAILY_RESET_PRICE_ID", "STRIPE_ADVENTURE_COMPANION_PRICE_ID", "STRIPE_P17_STANDALONE_PRICE_ID", "STRIPE_P18_COMPLETE_PLAYER_SYSTEM_PRICE_ID"]) if (!values[key]) failures.push(`${key} is required for accumulated checkout.`);
+for (const key of ["STRIPE_DAILY_RESET_PRICE_ID", "STRIPE_ADVENTURE_COMPANION_PRICE_ID", "STRIPE_P17_STANDALONE_PRICE_ID", "STRIPE_P18_COMPLETE_PLAYER_SYSTEM_PRICE_ID"]) {
+  if (!values[key]) failures.push(`${key} is required for accumulated checkout.`);
+  else if (!values[key].startsWith("price_")) failures.push(`${key} must be a Stripe Price ID (price_), not a Product ID.`);
+}
 
 report("NEXT_PUBLIC_SITE_URL", values.NEXT_PUBLIC_SITE_URL);
 if (!values.NEXT_PUBLIC_SITE_URL) failures.push("NEXT_PUBLIC_SITE_URL must point to a non-production staging/preview URL.");
@@ -62,10 +65,9 @@ else {
   } catch { failures.push("NEXT_PUBLIC_SITE_URL is not a valid URL."); }
 }
 report("POKOPIA_CUMULATIVE_CHECKOUT_ENABLED", values.POKOPIA_CUMULATIVE_CHECKOUT_ENABLED);
-report("P18_ACTIVATION_ENABLED", values.P18_ACTIVATION_ENABLED);
+report("P18_CHECKOUT_ACTIVATION_ENABLED", values.P18_CHECKOUT_ACTIVATION_ENABLED);
 report("P18_STAGED_STORAGE_VERIFIED_VERSION", values.P18_STAGED_STORAGE_VERIFIED_VERSION);
 if (values.POKOPIA_CUMULATIVE_CHECKOUT_ENABLED !== "true") failures.push("POKOPIA_CUMULATIVE_CHECKOUT_ENABLED must be true for staging verification.");
-if (values.P18_ACTIVATION_ENABLED !== "true") failures.push("P18_ACTIVATION_ENABLED must be true for P18 staging verification.");
 if (!values.P18_STAGED_STORAGE_VERIFIED_VERSION) failures.push(`P18_STAGED_STORAGE_VERIFIED_VERSION is required for P18 readiness (approved value: ${P18_STAGED_FULFILLMENT_VERSION}).`);
 else if (values.P18_STAGED_STORAGE_VERIFIED_VERSION !== P18_STAGED_FULFILLMENT_VERSION) failures.push("P18_STAGED_STORAGE_VERIFIED_VERSION does not match the approved repository version.");
 

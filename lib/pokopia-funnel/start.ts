@@ -1,4 +1,4 @@
-export const POKOPIA_START_NEXT_ROUTE = "/pokopia/funnel/daily-reset" as const;
+export const POKOPIA_START_NEXT_ROUTE = "/pokopia/daily-reset" as const;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

@@ -1,30 +1,34 @@
 "use client";
 
 import Image from "next/image";
-import { FunnelFrame, getCurrentFunnelState, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
+import { useState } from "react";
+import { FunnelFrame, getCurrentFunnelState, useCanonicalFunnelTracking, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
 import type { PokopiaFunnelOffer } from "@/data/pokopia-funnel";
-import { STORAGE_KEY } from "@/lib/attribution/capture";
+import { readStoredAttribution } from "@/lib/attribution/capture";
 import { useCumulativeJourney } from "@/components/pokopia/useCumulativeJourney";
 import { FunnelCartSummary } from "@/components/pokopia/FunnelCartSummary";
 
-function readStoredAttribution(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined {
-  try { const value = window.sessionStorage.getItem(STORAGE_KEY); return value ? JSON.parse(value) as { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } : undefined; } catch { return undefined; }
-}
+function readStoredAttributionForCheckout(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined { return readStoredAttribution(window.localStorage, window.sessionStorage) ?? undefined; }
 
-export function PokopiaCompletionistStage({ offer, cumulativeEnabled = false }: { offer: PokopiaFunnelOffer; cumulativeEnabled?: boolean }) {
+export function PokopiaCompletionistStage({ offer, cumulativeEnabled = false, p17Ready = false }: { offer: PokopiaFunnelOffer; cumulativeEnabled?: boolean; p17Ready?: boolean }) {
   const track = useFunnelTracking();
+  const trackCanonical = useCanonicalFunnelTracking();
   const state = getCurrentFunnelState();
   const cumulative = useCumulativeJourney(cumulativeEnabled);
-  const checkoutReady = Boolean(offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && offer.stripePriceId && state);
+  const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const checkoutReady = Boolean(p17Ready && offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && state);
   async function startCheckout() {
-    if (cumulativeEnabled) { const result = await cumulative.act("p17_accepted"); if (result.nextRoute) window.location.assign(result.nextRoute); return; }
-    if (!checkoutReady || !state || !offer.catalogProductId) { track("pokopia_completionist_unavailable"); return; }
-    track("pokopia_completionist_checkout_started", offer.funnelPrice);
-    const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: offer.catalogProductId, offerId: offer.id, sku: offer.productSku, upgrade: false, funnelId: state.funnelId, funnelStep: "completionist-kit", funnelSession: state.sessionId, attribution: readStoredAttribution() }) });
+    setStatus(null); setLoading(true);
+    if (cumulativeEnabled) { try { const result = await cumulative.act("p17_accepted"); if (result.nextRoute) { trackCanonical("p17_buy_clicked", { funnelStep: "completionist-kit", productId: "P17", productPriceCents: 1499, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); window.location.assign(result.nextRoute); return; } setStatus(result.error ?? "The Completionist Kit is unavailable right now. You can continue without it."); } finally { setLoading(false); } return; }
+    if (!checkoutReady || !state || !offer.catalogProductId) { track("pokopia_completionist_unavailable"); setStatus("The Completionist Kit is unavailable right now. You can continue without it."); setLoading(false); return; }
+    track("pokopia_completionist_checkout_started", offer.funnelPrice); trackCanonical("p17_buy_clicked", { funnelStep: "completionist-kit", productId: "P17", productPriceCents: 1499, selectedProducts: ["P17"], cartValueCents: 1499 });
+    const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: offer.catalogProductId, offerId: offer.id, sku: offer.productSku, upgrade: false, funnelId: state.funnelId, funnelStep: "completionist-kit", funnelSession: state.sessionId, attribution: readStoredAttributionForCheckout() }) });
     const result = await response.json() as { checkoutUrl?: string };
-    if (response.ok && result.checkoutUrl) window.location.assign(result.checkoutUrl);
+    if (response.ok && result.checkoutUrl) { trackCanonical("checkout_started", { funnelStep: "checkout", productId: "P17", productPriceCents: 1499, selectedProducts: ["P17"], cartValueCents: 1499 }); window.location.assign(result.checkoutUrl); return; }
+    setStatus("The Completionist Kit is unavailable right now. You can continue without it."); setLoading(false);
   }
-  async function skip() { track("pokopia_p17_skipped", offer.funnelPrice); if (cumulativeEnabled) { const result = await cumulative.act("p17_skipped"); window.location.assign(result.nextRoute ?? "/pokopia/funnel/complete"); return; } await fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "p17_skipped" }) }); window.location.assign("/pokopia/funnel/complete"); }
+  async function skip() { setStatus(null); setLoading(true); track("pokopia_p17_skipped", offer.funnelPrice); if (cumulativeEnabled) { try { const result = await cumulative.act("p17_skipped"); if (result.nextRoute) { trackCanonical("p17_skipped", { funnelStep: "completionist-kit", productId: "P17", productPriceCents: 1499, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); window.location.assign(result.nextRoute); return; } setStatus(result.error ?? "We could not continue your journey. Please try again."); } finally { setLoading(false); } return; } trackCanonical("p17_skipped", { funnelStep: "completionist-kit", productId: "P17", productPriceCents: 1499, selectedProducts: ["P17"], cartValueCents: 0 }); await fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "p17_skipped" }) }); window.location.assign("/pokopia/complete"); }
   const sceneCards = [
     ["cave", "/assets/products/pokopia/completionist-kit/p17-card-cave-mushroom-01.png", "Cave Mushroom printable reference card"],
     ["tomato", "/assets/products/pokopia/completionist-kit/p17-card-farm-tomato-04.png", "Farm Tomato printable reference card"],
@@ -46,8 +50,8 @@ export function PokopiaCompletionistStage({ offer, cumulativeEnabled = false }: 
         <div className="completionist-hero__price"><strong>$14.99</strong><span>ONE-TIME PURCHASE<br />US LETTER + A4 PDFs</span></div>
         <ul className="completionist-hero__benefits"><li>Field Guide quick reference</li><li>Field Guide in US Letter and A4</li><li>26-card digital reference collection</li><li>Instant digital access</li></ul>
         {cumulativeEnabled && <FunnelCartSummary journey={cumulative.journey} label="Add Completionist Kit" deltaCents={1499} newTotalCents={(cumulative.journey?.currentTotalCents ?? 0) + 1499} />}
-        <div className="completionist-hero__actions"><button className="action-link action-link--primary" type="button" onClick={startCheckout} disabled={cumulativeEnabled ? !cumulative.ready || !cumulative.journey : !checkoutReady}>{cumulativeEnabled ? "BUY" : checkoutReady ? "BUY" : "COMPLETIONIST KIT UNAVAILABLE"}</button><button className="completionist-hero__skip" type="button" onClick={skip} disabled={cumulativeEnabled && !cumulative.ready}>SKIP</button></div>
-        {!checkoutReady && <p className="focused-funnel__status" role="status">Checkout is unavailable right now.</p>}
+        <div className="completionist-hero__actions"><button className="action-link action-link--primary" type="button" onClick={startCheckout} disabled={loading || !p17Ready || (cumulativeEnabled ? !cumulative.ready || !cumulative.journey : false)}>{loading ? "UPDATING…" : "BUY"}</button><button className="completionist-hero__skip" type="button" onClick={skip} disabled={loading || (cumulativeEnabled && !cumulative.ready)}>SKIP</button></div>
+        {!checkoutReady && <p className="focused-funnel__status" role="status">Checkout is unavailable right now. You can continue without the Completionist Kit.</p>}{status && <p className="focused-funnel__status" role="alert">{status}</p>}
         <p className="completionist-hero__digital">DIGITAL DOWNLOAD · NO PHYSICAL ITEM SHIPS</p>
       </div>
       <div className="completionist-scene" aria-label="Pokopia Completionist Kit digital product previews">

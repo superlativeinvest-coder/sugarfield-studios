@@ -1,4 +1,2 @@
-import type { Metadata } from "next";
-import { PokopiaStarterStage } from "@/components/pokopia/PokopiaStarterStage";
-export const metadata: Metadata = { title: "Free Pokopia Session Starter | Sugarfield Studio", description: "Organize your next Pokopia session with a free Sugarfield Studio starter tool." };
-export default function PokopiaFunnelStartPage() { return <PokopiaStarterStage />; }
+import { permanentRedirect } from "next/navigation";
+export default function LegacyPokopiaStartPage() { permanentRedirect("/pokopia/start"); }

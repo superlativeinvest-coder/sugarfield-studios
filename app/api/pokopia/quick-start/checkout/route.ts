@@ -2,6 +2,8 @@ import { getCustomerSession } from "@/lib/customer/session";
 import { supabaseCustomerMetadataForStripe } from "@/lib/customer/stripe-binding";
 import { getQuickStartStripePriceId, isStripeSandboxMode } from "@/lib/stripe/configuration";
 import { getStripeClient } from "@/lib/stripe/server";
+import { consentMetadataForRequest } from "@/lib/privacy/advertising-consent-server";
+import { resolveCheckoutOrigin } from "@/lib/http/checkout-origin";
 
 type CheckoutBody = {
   funnelSession?: unknown;
@@ -24,13 +26,14 @@ export async function POST(request: Request): Promise<Response> {
 
   const body = await request.json().catch(() => ({})) as CheckoutBody;
   const journeyId = request.headers.get("cookie")?.match(/(?:^|; )sf_pokopia_journey=([^;]+)/)?.[1];
-  const origin = new URL(request.url).origin;
+  const advertisingConsent = consentMetadataForRequest(request);
   try {
+    const origin = resolveCheckoutOrigin(request);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/pokopia/funnel/start`,
+      cancel_url: `${origin}/pokopia/start`,
       metadata: {
         product_id: "FREE-QUICK-START",
         offer_id: "pokopia_quick_start_pack",
@@ -43,6 +46,7 @@ export async function POST(request: Request): Promise<Response> {
         ...(safeAttribution(body.attribution?.firstTouch) ? { attribution_first_touch: safeAttribution(body.attribution?.firstTouch)! } : {}),
         ...(safeAttribution(body.attribution?.currentTouch) ? { attribution_current_touch: safeAttribution(body.attribution?.currentTouch)! } : {}),
         ...supabaseCustomerMetadataForStripe(customerSession.customer.id),
+        ...advertisingConsent,
       },
     });
     return Response.json({ checkoutUrl: session.url ?? undefined });

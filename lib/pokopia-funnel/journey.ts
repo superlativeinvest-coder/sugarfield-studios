@@ -1,7 +1,7 @@
 import type { PokopiaSelectedProduct } from "@/lib/pokopia-funnel/cumulative";
 
 export type PokopiaJourney = {
-  journeyId: string; funnelSessionId?: string; customerId?: string; leadEmail?: string;
+  journeyId: string; anonymousId?: string; funnelSessionId?: string; customerId?: string; leadEmail?: string;
   quickStartDeliveryStatus?: "pending" | "queued" | "sent" | "failed" | "not_configured";
   quickStartDeliveryRequestedAt?: string; quickStartDeliveryCompletedAt?: string; quickStartDeliveryFailedAt?: string; quickStartDeliveryError?: string;
   quickStartClaimed: boolean;
@@ -19,7 +19,7 @@ export type PokopiaJourney = {
   firstTouchAttribution?: Record<string, string>; currentAttribution?: Record<string, string>; createdAt?: string; updatedAt?: string; completedAt?: string;
 };
 export const emptyPokopiaJourney = (journeyId = ""): PokopiaJourney => ({ journeyId, quickStartClaimed: false, dailyResetViewed: false, dailyResetPurchased: false, dailyResetSkipped: false, companionViewed: false, companionPurchased: false, companionSkipped: false, p18Eligible: false, p18QualifiedView: false, p18Bypassed: false, p18Viewed: false, p18Purchased: false, p18Skipped: false, p17Eligible: false, p17DownsellViewed: false, p17Purchased: false, p17Skipped: false, dailyResetAccepted: false, companionAccepted: false, p18Accepted: false, p17Accepted: false, selectedProducts: [], currentTotalCents: 0, selectedTier: "FREE", journeyVersion: 0, checkoutCreated: false, checkoutCompleted: false, journeyCompleted: false });
-export type PokopiaNextRoute = "/pokopia/funnel/complete-player-system" | "/pokopia/funnel/complete" | "/pokopia/funnel/completionist-kit" | "/pokopia/funnel/checkout" | "/pokopia/funnel/companion" | "/pokopia/funnel/daily-reset";
+export type PokopiaNextRoute = "/pokopia/complete-player-system" | "/pokopia/complete" | "/pokopia/completionist-kit" | "/pokopia/checkout" | "/pokopia/companion" | "/pokopia/daily-reset";
 // A later SKIP never removes an earlier BUY; therefore it cannot convert an
 // already accepted offer into the double-skip bypass.
 export function isDoubleSkip(journey: PokopiaJourney): boolean { return journey.dailyResetSkipped && !journey.dailyResetAccepted && journey.companionSkipped && !journey.companionAccepted; }

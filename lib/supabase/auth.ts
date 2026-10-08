@@ -9,4 +9,4 @@ export async function getSupabaseServerAuthClient() {
   const store = await cookies();
   return createServerClient(value.url, value.key, { cookies: { getAll: () => store.getAll(), setAll: (items) => { try { items.forEach(({ name, value: cookieValue, options }) => store.set(name, cookieValue, options)); } catch { /* server render is read-only */ } } } });
 }
-export function isSafeAuthReturnPath(value: string | null | undefined): value is string { return Boolean(value && value.startsWith("/pokopia/funnel/") && !value.startsWith("//")); }
+export function isSafeAuthReturnPath(value: string | null | undefined): value is string { return Boolean(value && /^(?:\/pokopia\/(?:start|daily-reset|companion|complete-player-system|completionist-kit|checkout|complete|sign-in)|\/pokopia\/funnel\/(?:start|daily-reset|companion|complete-player-system|completionist-kit|checkout|complete|sign-in))(?:[?#/]|$)/.test(value) && !value.startsWith("//")); }

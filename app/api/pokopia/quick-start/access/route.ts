@@ -3,18 +3,14 @@ import { getSupabaseServerAuthClient } from "@/lib/supabase/auth";
 import { getEmailProvider } from "@/lib/email/provider";
 import { createAccessToken, getQuickStartAccessRepository, hashAccessToken, QUICK_START_ACCESS_COOKIE, QUICK_START_ACCESS_MAX_AGE } from "@/lib/quick-start/access";
 import { QUICK_START_PRODUCT_ID, QUICK_START_SKU } from "@/lib/quick-start/manifest";
+import { normalizeAttributionValues } from "@/lib/attribution/capture";
 
 function readString(value: unknown, max = 120): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, max) : undefined;
 }
 
 function readAttribution(value: unknown): Record<string, string> | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const result: Record<string, string> = {};
-  for (const [key, raw] of Object.entries(value)) {
-    const clean = readString(raw);
-    if (clean) result[key.slice(0, 40)] = clean;
-  }
+  const result = normalizeAttributionValues(value);
   return Object.keys(result).length ? result : undefined;
 }
 

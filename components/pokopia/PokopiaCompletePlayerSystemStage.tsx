@@ -1,16 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { FunnelFrame, getCurrentFunnelState, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
+import { useEffect, useState } from "react";
+import { FunnelFrame, getCurrentFunnelState, useCanonicalFunnelTracking, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
 import type { PokopiaFunnelOffer } from "@/data/pokopia-funnel";
-import { STORAGE_KEY } from "@/lib/attribution/capture";
+import { readStoredAttribution } from "@/lib/attribution/capture";
 import { useCumulativeJourney } from "@/components/pokopia/useCumulativeJourney";
 import { FunnelCartSummary } from "@/components/pokopia/FunnelCartSummary";
 
-function readStoredAttribution(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined {
-  try { const value = window.sessionStorage.getItem(STORAGE_KEY); return value ? JSON.parse(value) as { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } : undefined; } catch { return undefined; }
-}
+function readStoredAttributionForCheckout(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined { return readStoredAttribution(window.localStorage, window.sessionStorage) ?? undefined; }
 
 const primaryPreviews = [
   ["hq", "/assets/products/pokopia/complete-player-system/p18-hq-command-center.png", "My Pokopia HQ Command Center printable page", 1103, 1426],
@@ -44,23 +42,27 @@ const valuePanels = [
 
 export function PokopiaCompletePlayerSystemStage({ offer, sourceOrderId, cumulativeEnabled = false, p18Ready = false }: { offer: PokopiaFunnelOffer; sourceOrderId: string; sourceProductId: "P06" | "P16"; cumulativeEnabled?: boolean; p18Ready?: boolean }) {
   const track = useFunnelTracking();
-  const state = getCurrentFunnelState();
+  const trackCanonical = useCanonicalFunnelTracking();
+  // Session storage is browser-only. Deferring it until after hydration keeps
+  // the server HTML and the first client render identical.
+  const [state, setState] = useState<ReturnType<typeof getCurrentFunnelState>>(null);
   const [status, setStatus] = useState<string | null>(null);
   const cumulative = useCumulativeJourney(cumulativeEnabled);
-  const checkoutReady = Boolean(offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && offer.stripePriceId && state);
+  useEffect(() => { setState(getCurrentFunnelState()); }, []);
+  const checkoutReady = Boolean(p18Ready && offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && state);
   async function buy() {
-    if (cumulativeEnabled) { if (!p18Ready) { setStatus("Complete Player System checkout remains unavailable until its approved Stripe price and delivery manifest are configured."); return; } const result = await cumulative.act("p18_accepted"); if (result.nextRoute) window.location.assign(result.nextRoute); else setStatus(result.error ?? "Checkout is unavailable right now."); return; }
+    if (cumulativeEnabled) { if (!p18Ready) { setStatus("Complete Player System checkout remains unavailable until its approved Stripe price and delivery manifest are configured."); return; } const result = await cumulative.act("p18_accepted"); if (result.nextRoute) { trackCanonical("p18_buy_clicked", { funnelStep: "complete-player-system", productId: "P18", productPriceCents: 2499, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); window.location.assign(result.nextRoute); } else setStatus(result.error ?? "Checkout is unavailable right now."); return; }
     if (!checkoutReady || !state || !offer.catalogProductId) { setStatus("Complete Player System purchasing is not available yet."); return; }
-    track("pokopia_p18_checkout_started", offer.funnelPrice);
-    const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: "P18", offerId: offer.id, sku: offer.productSku, upgrade: true, funnelId: state.funnelId, funnelStep: "complete-player-system", funnelSession: state.sessionId, sourceOrderId, attribution: readStoredAttribution() }) });
+    track("pokopia_p18_checkout_started", offer.funnelPrice); trackCanonical("p18_buy_clicked", { funnelStep: "complete-player-system", productId: "P18", productPriceCents: 2499, selectedProducts: ["P18"], cartValueCents: 2499 });
+    const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: "P18", offerId: offer.id, sku: offer.productSku, upgrade: true, funnelId: state.funnelId, funnelStep: "complete-player-system", funnelSession: state.sessionId, sourceOrderId, attribution: readStoredAttributionForCheckout() }) });
     const result = await response.json() as { checkoutUrl?: string; error?: string };
-    if (response.ok && result.checkoutUrl) window.location.assign(result.checkoutUrl); else setStatus(result.error ?? "Checkout is unavailable right now.");
+    if (response.ok && result.checkoutUrl) { trackCanonical("checkout_started", { funnelStep: "checkout", productId: "P18", productPriceCents: 2499, selectedProducts: ["P18"], cartValueCents: 2499 }); window.location.assign(result.checkoutUrl); } else setStatus(result.error ?? "Checkout is unavailable right now.");
   }
   async function skip() {
-    if (cumulativeEnabled) { const result = await cumulative.act("p18_skipped"); window.location.assign(result.nextRoute ?? "/pokopia/funnel/completionist-kit"); return; }
-    track("pokopia_p18_skipped", offer.funnelPrice);
+    if (cumulativeEnabled) { const result = await cumulative.act("p18_skipped"); if (result.nextRoute) trackCanonical("p18_skipped", { funnelStep: "complete-player-system", productId: "P18", productPriceCents: 2499, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); window.location.assign(result.nextRoute ?? "/pokopia/completionist-kit"); return; }
+    track("pokopia_p18_skipped", offer.funnelPrice); trackCanonical("p18_skipped", { funnelStep: "complete-player-system", productId: "P18", productPriceCents: 2499, selectedProducts: ["P18"], cartValueCents: 0 });
     await fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "p18_skipped", sourceOrderId }) });
-    window.location.assign("/pokopia/funnel/completionist-kit");
+    window.location.assign("/pokopia/completionist-kit");
   }
   return <FunnelFrame step="complete-player-system">
     <section className="p18-hero">
@@ -74,7 +76,7 @@ export function PokopiaCompletePlayerSystemStage({ offer, sourceOrderId, cumulat
         <ul className="p18-hero__benefits"><li>My Pokopia HQ 3-page control center</li><li>Daily, weekly, and long-term planning tools</li><li>Master progress, roadmap, and resource tracking</li><li>Field guide, trackers, build planning, and dashboard</li><li>Instant digital access</li></ul>
         {cumulativeEnabled && cumulative.journey && <FunnelCartSummary journey={cumulative.journey} label="Add Complete Player System" deltaCents={2499} newTotalCents={cumulative.journey.currentTotalCents + 2499} />}
         <div className="p18-hero__actions"><button className="action-link action-link--primary" type="button" onClick={buy} disabled={cumulativeEnabled ? !p18Ready || !cumulative.ready : !checkoutReady}>{cumulativeEnabled ? (p18Ready ? "BUY" : "COMPLETE PLAYER SYSTEM UNAVAILABLE") : checkoutReady ? "BUY" : "COMPLETE PLAYER SYSTEM UNAVAILABLE"}</button><button className="p18-hero__skip" type="button" onClick={skip} disabled={cumulativeEnabled && !cumulative.ready}>SKIP</button></div>
-        {status && <p className="focused-funnel__status" role="status">{status}</p>}{!checkoutReady && <p className="focused-funnel__status">Complete Player System purchasing is not available yet.</p>}
+        {status && <p className="focused-funnel__status" role="status">{status}</p>}{!cumulativeEnabled && !checkoutReady && <p className="focused-funnel__status">Complete Player System purchasing is not available yet.</p>}
         <p className="p18-hero__digital">DIGITAL DOWNLOAD · NO PHYSICAL ITEM SHIPS</p>
       </div>
       <div className="p18-scene" aria-label="Pokopia Complete Player System printable preview collection">

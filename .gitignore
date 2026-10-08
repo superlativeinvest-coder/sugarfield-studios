@@ -10,7 +10,6 @@ node_modules/
 *.tsbuildinfo
 out/
 *.log
-assets/fulfillment/pokopia/complete-player-system/reports/
 .env
 .env.local
 .env.*.local
@@ -21,5 +20,27 @@ tmp/
 tsconfig.tsbuildinfo
 $
 
+# Local source artifacts, generated audits, and tool state are never release inputs.
+PRODUCTS/
+.next-ui/
+.next-verify/
+.next-release/
+.next-e2e/
+test-results/
+_AGENTS/
+_ANALYTICS/
+_MARKETING/
+_OPS/
+_SYSTEM/
+_TEMP/
+_quick_start_pdf_qa/
+supabase/.temp/
+scripts/__pycache__/
+mobile-*.png
+Direct Connection.txt
+bty-moderator.txt
+!.env.example
+
 .vercel
 .env*
+!.env.example

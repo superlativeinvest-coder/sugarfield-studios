@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { getP16V3PackageFiles, P16_V3_FULFILLMENT_VERSION, validateP16V3Package } from "@/lib/delivery/p16-v3-staged";
 import { P16_V3_STORAGE_ROOT, planP16V3StorageStage, type P16V3RemoteState, type P16V3StorageVerificationRecord, type P16V3StorageVerificationReport } from "@/lib/delivery/p16-storage-staging";
+import { artifactRootFromArgs, resolveArtifactSourcePath } from "@/scripts/lib/artifact-root";
 
 loadEnvConfig(process.cwd());
 const stagingEnvPath = join(process.cwd(), ".env.staging.local");
@@ -15,6 +16,7 @@ for (const line of readFileSync(stagingEnvPath, "utf8").split(/\r?\n/)) {
   if (match) process.env[match[1]] = match[2].trim().replace(/^['\"]|['\"]$/g, "");
 }
 const execute = process.argv.includes("--execute");
+const artifactRoot = artifactRootFromArgs();
 const url = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "digital-products";
@@ -65,7 +67,7 @@ async function main() {
   if (manifestErrors.length) throw new Error(manifestErrors.join(" "));
   const files = getP16V3PackageFiles();
   const local = await Promise.all(files.map(async (file) => {
-    const bytes = await readFile(file.sourcePath);
+    const bytes = await readFile(resolveArtifactSourcePath(file.sourcePath, artifactRoot));
     if (bytes.length !== file.bytes || sha256(bytes) !== file.sha256) throw new Error(`Local integrity mismatch: ${file.sourcePath}`);
     return [file.logicalDeliveryPath, bytes] as const;
   }));

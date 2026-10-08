@@ -20,30 +20,41 @@
     "stripe:configure-complete-player-system": "tsx scripts/configure-stripe-complete-player-system.ts",
     "supabase:stage-p18-private-storage": "tsx scripts/stage-p18-private-storage.ts",
     "supabase:stage-p16-v3-private-storage": "tsx scripts/stage-p16-v3-private-storage.ts",
+    "supabase:promote-p16-v3-production": "tsx scripts/promote-p16-v3-production-storage.ts",
     "supabase:staging:check": "tsx scripts/supabase-staging-check.ts",
     "staging:check": "tsx scripts/staging-readiness.ts",
+    "release:schema-check": "tsx scripts/verify-release-schema.ts",
     "supabase:configure-delivery": "tsx scripts/configure-supabase-delivery.ts",
     "supabase:configure-p16-v2-delivery": "tsx scripts/configure-p16-v2-delivery.ts",
     "supabase:update-p16-v2-spawn-tracker": "tsx scripts/update-p16-v2-spawn-tracker.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "supabase:storage:weekly-monitor": "tsx scripts/supabase-storage-weekly-monitor.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "release:ci": "npm test && npm run typecheck && npm run lint && npm run catalog:validate && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.112.4",
-    "next": "^15.5.9",
+    "next": "15.5.27",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "stripe": "^22.6.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "eslint": "^9.33.0",
-    "eslint-config-next": "15.5.0",
+    "eslint-config-next": "15.5.27",
     "supabase": "^2.117.0",
     "tsx": "^4.23.12",
     "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "postcss": "8.5.29",
+    "sharp": "0.35.5",
+    "source-map-js": "1.2.2"
   }
 }

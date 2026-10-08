@@ -2,20 +2,19 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { FunnelFrame, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
+import { FunnelFrame, useCanonicalFunnelTracking, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
 import type { PokopiaFunnelOffer } from "@/data/pokopia-funnel";
 import { getCurrentFunnelState } from "@/components/pokopia/PokopiaFunnelStage";
-import { STORAGE_KEY } from "@/lib/attribution/capture";
+import { readStoredAttribution } from "@/lib/attribution/capture";
 import { createFunnelSession, writeFunnelState } from "@/lib/pokopia-funnel/state";
 import { useCumulativeJourney } from "@/components/pokopia/useCumulativeJourney";
 import { FunnelCartSummary } from "@/components/pokopia/FunnelCartSummary";
 
-function readStoredAttribution(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined {
-  try { const value = window.sessionStorage.getItem(STORAGE_KEY); return value ? JSON.parse(value) as { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } : undefined; } catch { return undefined; }
-}
+function readStoredAttributionForCheckout(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined { return readStoredAttribution(window.localStorage, window.sessionStorage) ?? undefined; }
 
-export function PokopiaCompanionStage({ offer, dailyResetOrderId, cumulativeEnabled = false }: { offer: PokopiaFunnelOffer; dailyResetOrderId: string; cumulativeEnabled?: boolean }) {
+export function PokopiaCompanionStage({ offer, dailyResetOrderId, cumulativeEnabled = false, p16Ready = false }: { offer: PokopiaFunnelOffer; dailyResetOrderId: string; cumulativeEnabled?: boolean; p16Ready?: boolean }) {
   const track = useFunnelTracking();
+  const trackCanonical = useCanonicalFunnelTracking();
   const [state, setState] = useState(() => getCurrentFunnelState());
   const cumulative = useCumulativeJourney(cumulativeEnabled);
   useEffect(() => {
@@ -23,24 +22,25 @@ export function PokopiaCompanionStage({ offer, dailyResetOrderId, cumulativeEnab
     writeFunnelState(window.sessionStorage, current);
     setState(current);
   }, []);
-  const checkoutReady = cumulativeEnabled ? cumulative.ready : Boolean(offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && state);
+  const checkoutReady = Boolean(p16Ready && (cumulativeEnabled ? cumulative.ready : offer.enabled && offer.assetReady && offer.fulfillmentReady && offer.catalogProductId && state));
   async function startCheckout() {
-    if (cumulativeEnabled) { const result = await cumulative.act("companion_accepted"); if (result.nextRoute) window.location.assign(result.nextRoute); return; }
+    if (cumulativeEnabled) { const result = await cumulative.act("companion_accepted"); if (result.nextRoute) { trackCanonical("p16_buy_clicked", { funnelStep: "companion", productId: "P16", productPriceCents: 1999, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); window.location.assign(result.nextRoute); } return; }
     if (!checkoutReady || !state || !offer.catalogProductId) { track("pokopia_companion_unavailable"); return; }
-    track("pokopia_companion_checkout_started");
-    const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: offer.catalogProductId, offerId: offer.id, sku: offer.productSku ?? offer.catalogProductId, upgrade: false, funnelId: state.funnelId, funnelStep: "companion", funnelSession: state.sessionId, attribution: readStoredAttribution() }) });
+    track("pokopia_companion_checkout_started"); trackCanonical("p16_buy_clicked", { funnelStep: "companion", productId: "P16", productPriceCents: 1999, selectedProducts: ["P16"], cartValueCents: 1999 });
+    const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: offer.catalogProductId, offerId: offer.id, sku: offer.productSku ?? offer.catalogProductId, upgrade: false, funnelId: state.funnelId, funnelStep: "companion", funnelSession: state.sessionId, attribution: readStoredAttributionForCheckout() }) });
     const result = await response.json() as { checkoutUrl?: string };
-    if (response.ok && result.checkoutUrl) window.location.assign(result.checkoutUrl);
+    if (response.ok && result.checkoutUrl) { trackCanonical("checkout_started", { funnelStep: "checkout", productId: "P16", productPriceCents: 1999, selectedProducts: ["P16"], cartValueCents: 1999 }); window.location.assign(result.checkoutUrl); }
   }
 
   async function skip() {
-    if (cumulativeEnabled) { const result = await cumulative.act("companion_skipped"); window.location.assign(result.nextRoute ?? "/pokopia/funnel/complete"); return; }
+    if (cumulativeEnabled) { const result = await cumulative.act("companion_skipped"); if (result.nextRoute) { trackCanonical("p16_skipped", { funnelStep: "companion", productId: "P16", productPriceCents: 1999, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); } window.location.assign(result.nextRoute ?? "/pokopia/complete"); return; }
     if (state) { state.companionSkipped = true; writeFunnelState(window.sessionStorage, state); }
+    trackCanonical("p16_skipped", { funnelStep: "companion", productId: "P16", productPriceCents: 1999, selectedProducts: ["P16"], cartValueCents: 0 });
     const response = await fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "companion_skipped", ...(dailyResetOrderId ? { sourceOrderId: dailyResetOrderId } : {}) }) });
     const result = await response.json() as { nextRoute?: string };
-    const next = result.nextRoute === "/pokopia/funnel/complete-player-system" && dailyResetOrderId
-      ? `/pokopia/funnel/complete-player-system?order_id=${encodeURIComponent(dailyResetOrderId)}`
-      : result.nextRoute ?? "/pokopia/funnel/complete";
+    const next = result.nextRoute === "/pokopia/complete-player-system" && dailyResetOrderId
+      ? `/pokopia/complete-player-system?order_id=${encodeURIComponent(dailyResetOrderId)}`
+      : result.nextRoute ?? "/pokopia/complete";
     window.location.assign(next);
   }
 

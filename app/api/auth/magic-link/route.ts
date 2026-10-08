@@ -5,7 +5,7 @@ import { isSafeAuthReturnPath, SUPABASE_AUTH_CALLBACK_PATH } from "@/lib/supabas
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { email?: unknown; next?: unknown } | null;
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
-  const next = typeof body?.next === "string" && isSafeAuthReturnPath(body.next) ? body.next : "/pokopia/funnel/daily-reset";
+  const next = typeof body?.next === "string" && isSafeAuthReturnPath(body.next) ? body.next : "/pokopia/daily-reset";
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL; const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return NextResponse.json({ error: "Passwordless sign-in is not configured yet." }, { status: 503 });
   if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });

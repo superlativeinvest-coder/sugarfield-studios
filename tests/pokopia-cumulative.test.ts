@@ -12,6 +12,7 @@ test("accumulated totals use only canonical server prices", () => {
   assert.equal(getSelectedTotalCents(["P06", "P16", "P17"]), 3997);
   assert.equal(getSelectedTotalCents(["P16", "P18"]), 4498);
   assert.equal(getSelectedTotalCents(["P06"]), 499);
+  assert.equal(getSelectedTotalCents(["P06", "P16", "P18", "P17", "P17"]), 6496);
   assert.deepEqual(getCanonicalLineItems(["P06", "P16", "P18"]).map((item) => item.productId), ["P06", "P16", "P18"]);
 });
 

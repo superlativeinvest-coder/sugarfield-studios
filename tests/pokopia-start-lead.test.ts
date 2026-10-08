@@ -10,5 +10,5 @@ test("Start lead emails are normalized and validated server-side", () => {
 });
 
 test("Start submission has one server-owned next route", () => {
-  assert.equal(POKOPIA_START_NEXT_ROUTE, "/pokopia/funnel/daily-reset");
+  assert.equal(POKOPIA_START_NEXT_ROUTE, "/pokopia/daily-reset");
 });

@@ -20,7 +20,7 @@ The Daily Reset Checklist artwork is now available at `public/assets/products/po
 | Bundle | Eventual anchor-offer presentation | 4:3 | Approved bundle contents only after catalog configuration exists | Yes, once available | No placeholder art should imply a live bundle | Use a single compact collage |
 | Lifestyle | Shareable brand/editorial moment | 4:3 | Original cozy gaming desk with Sugarfield planning tools | Only approved product art | Yes | Keep subject on the center/right for text-first mobile layout |
 
-The Daily Reset offer no longer requires a missing product-preview asset. Its supplied page artwork is used on `/pokopia/funnel/daily-reset`; the commercial checkout remains gated separately by Stripe and fulfillment configuration.
+The Daily Reset offer no longer requires a missing product-preview asset. Its supplied page artwork is used on `/pokopia/daily-reset`; the commercial checkout remains gated separately by Stripe and fulfillment configuration.
 
 No production-ready product previews were fabricated. Current product cards intentionally show a non-purchasable artwork-pending state.
 

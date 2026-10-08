@@ -19,20 +19,13 @@ if (missing.length) throw new Error(`Missing staging values: ${missing.join(", "
 assertApprovedStagingSupabaseTarget(values.SUPABASE_URL);
 assertApprovedStagingSupabaseTarget(values.NEXT_PUBLIC_SUPABASE_URL);
 
-// These explicit empty values take precedence over .env.local when Next loads it.
-// Staging authentication can be tested without any checkout capability.
-const disabledCommerce = Object.fromEntries([
-  "STRIPE_SECRET_KEY",
-  "STRIPE_WEBHOOK_SECRET",
-  "STRIPE_LIVE_WEBHOOK_SECRET",
-  "STRIPE_P18_LIVE_PRICE_ID",
-  "STRIPE_ADVENTURE_COMPANION_PRICE_ID",
-  "STRIPE_P17_STANDALONE_PRICE_ID",
-  "STRIPE_P17_UPGRADE_PRICE_ID",
-  "STRIPE_DAILY_RESET_PRICE_ID",
-  "STRIPE_QUICK_START_PRICE_ID",
-  "STRIPE_MINI_TOOL_PRICE_ID",
-].map((key) => [key, ""]));
+// Staging must use the test-mode values in .env.staging.local and never
+// inherit live-only Stripe settings from .env.local. P18 activation remains
+// opt-in through the staging-only checkout flag.
+const stagingSafetyOverrides = {
+  STRIPE_LIVE_WEBHOOK_SECRET: "",
+  STRIPE_P18_LIVE_PRICE_ID: "",
+};
 
 const port = process.argv[2] ?? "3001";
 if (!/^\d{4,5}$/.test(port)) throw new Error("Usage: npm run dev:staging [-- 3001]");
@@ -44,12 +37,11 @@ const child = spawn(process.platform === "win32" ? "cmd.exe" : "npx", process.pl
   env: {
     ...process.env,
     ...values,
-    ...disabledCommerce,
+    ...stagingSafetyOverrides,
     NEXT_PUBLIC_SITE_URL: `http://localhost:${port}`,
     NEXT_PUBLIC_STAGING_AUTH_TEST: "true",
     NEXT_DIST_DIR: ".next-staging",
-    POKOPIA_CUMULATIVE_CHECKOUT_ENABLED: "false",
-    P18_STAGED_STORAGE_VERIFIED_VERSION: "",
+    POKOPIA_CUMULATIVE_CHECKOUT_ENABLED: "true",
   },
   stdio: "inherit",
 });

@@ -1,4 +1,3 @@
-import { loadEnvConfig } from "@next/env";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -6,20 +5,24 @@ import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { P18_STAGED_FULFILLMENT_VERSION, getStagedP18PackageFiles, validateP18StagedPackage } from "@/lib/delivery/p18-staged";
 import { P18_STORAGE_ROOT, planP18StorageStage, type P18RemoteState, type P18StorageVerificationRecord, type P18StorageVerificationReport } from "@/lib/delivery/p18-storage-staging";
+import { artifactRootFromArgs, resolveArtifactSourcePath } from "@/scripts/lib/artifact-root";
 
-loadEnvConfig(process.cwd());
 const stagingEnvPath = join(process.cwd(), ".env.staging.local");
 if (!existsSync(stagingEnvPath)) throw new Error("Missing .env.staging.local. Refusing to stage delivery assets.");
+const stagingValues: Record<string, string> = {};
 for (const line of readFileSync(stagingEnvPath, "utf8").split(/\r?\n/)) {
   const match = /^\s*([A-Z0-9_]+)=(.*)$/.exec(line);
-  if (match) process.env[match[1]] = match[2].trim().replace(/^['\"]|['\"]$/g, "");
+  if (match) stagingValues[match[1]] = match[2].trim().replace(/^['\"]|['\"]$/g, "");
 }
 const execute = process.argv.includes("--execute");
-const url = process.env.SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "digital-products";
+const artifactRoot = artifactRootFromArgs();
+const verify = process.argv.includes("--verify");
+if (execute && verify) throw new Error("Choose either --verify or --execute, not both.");
+const url = stagingValues.SUPABASE_URL;
+const serviceRoleKey = stagingValues.SUPABASE_SERVICE_ROLE_KEY;
+const bucket = stagingValues.SUPABASE_STORAGE_BUCKET ?? "digital-products";
 if (
-  process.env.POKOPIA_STAGING_ONLY !== "true"
+  stagingValues.POKOPIA_STAGING_ONLY !== "true"
   || url !== "https://faxsnbdjzniwyhtnsvfz.supabase.co"
   || !serviceRoleKey
 ) {
@@ -57,7 +60,7 @@ async function main() {
   if (manifestErrors.length) throw new Error(manifestErrors.join(" "));
   const files = getStagedP18PackageFiles();
   const local = await Promise.all(files.map(async (file) => {
-    const bytes = await readFile(file.sourcePath);
+    const bytes = await readFile(resolveArtifactSourcePath(file.sourcePath, artifactRoot));
     if (bytes.length !== file.bytes || sha256(bytes) !== file.sha256) throw new Error(`Local integrity mismatch: ${file.sourcePath}`);
     return [file.logicalDeliveryPath, bytes] as const;
   }));
@@ -78,11 +81,12 @@ async function main() {
   }
   const plan = planP18StorageStage(remoteStates, execute);
   if (plan.some((entry) => entry.remoteState === "collision")) throw new Error(`Refusing to overwrite a mismatched staged P18 object: ${plan.filter((entry) => entry.remoteState === "collision").map((entry) => entry.file.logicalDeliveryPath).join(", ")}`);
-  if (!execute) { console.log(JSON.stringify({ mode: "dry-run", bucket, root: P18_STORAGE_ROOT, entries: plan, writes: 0 }, null, 2)); return; }
+  if (!execute && !verify) { console.log(JSON.stringify({ mode: "dry-run", bucket, root: P18_STORAGE_ROOT, entries: plan, writes: 0 }, null, 2)); return; }
+  if (verify && plan.some((entry) => entry.remoteState === "missing")) throw new Error("P18 verification will not upload missing objects. Run the approved staging operation before seeking delivery approval.");
   const records: P18StorageVerificationRecord[] = [];
   for (const entry of plan) {
     const source = localByPath.get(entry.file.logicalDeliveryPath)!;
-    if (entry.remoteState === "missing") {
+    if (entry.remoteState === "missing" && execute) {
       await uploadPrivatePdf(entry.file.logicalDeliveryPath, source);
     }
     const { data: remoteBlob, error: remoteError } = await client.storage.from(bucket).download(entry.file.logicalDeliveryPath, { cacheNonce: randomUUID() });
@@ -102,7 +106,7 @@ async function main() {
   const reports = join(process.cwd(), "assets", "fulfillment", "pokopia", "complete-player-system", "reports");
   await mkdir(reports, { recursive: true });
   await writeFile(join(reports, "p18-storage-verification-latest.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
-  console.log(JSON.stringify({ mode: "execute", bucket, root: P18_STORAGE_ROOT, uploaded: records.filter((record) => record.uploadStatus === "uploaded").length, reusedIdentical: records.filter((record) => record.reusedIdentical).length, verified: records.length, report: "assets/fulfillment/pokopia/complete-player-system/reports/p18-storage-verification-latest.json" }, null, 2));
+  console.log(JSON.stringify({ mode: execute ? "execute" : "verify", bucket, root: P18_STORAGE_ROOT, uploaded: records.filter((record) => record.uploadStatus === "uploaded").length, reusedIdentical: records.filter((record) => record.reusedIdentical).length, verified: records.length, report: "assets/fulfillment/pokopia/complete-player-system/reports/p18-storage-verification-latest.json" }, null, 2));
 }
 
 main().catch((error: unknown) => { console.error(error instanceof Error ? error.message : "P18 storage staging failed."); process.exitCode = 1; });

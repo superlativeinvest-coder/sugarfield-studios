@@ -11,7 +11,7 @@ Current status: `QUICK START PACK FULFILLMENT INTEGRATED — READY FOR PUBLIC FU
 - Product ID: `FREE-QUICK-START`
 - SKU: `pokopia_quick_start_pack`
 - Price: free
-- Public route: `/pokopia/funnel/start`
+- Public route: `/pokopia/start`
 - Stripe Product/Price: none
 
 ## Storage manifest
@@ -59,7 +59,7 @@ Until that migration is applied and smoke-tested, `/api/email-signup` returns a 
 - Letter download: PASS — HTTP 200 signed URL, approximately 60 minutes, approved hash match.
 - A4 download: PASS — HTTP 200 signed URL, approximately 60 minutes, approved hash match.
 - Cookie: PASS — `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, and 30-day max age.
-- Analytics and P06 CTA code paths: PASS; event names and `/pokopia/funnel/daily-reset` route verified.
+- Analytics and P06 CTA code paths: PASS; event names and `/pokopia/daily-reset` route verified.
 - Paid-flow regression: PASS — 15/15 tests.
 
 ## Paid-flow boundary

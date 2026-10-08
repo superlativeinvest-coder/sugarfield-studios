@@ -16,7 +16,7 @@ The webhook validates the Stripe signature, stores the Checkout Session ID, even
    stripe.cmd listen --forward-to localhost:3000/api/stripe/webhook
    ```
 
-3. Open `/pokopia/funnel/daily-reset` and use Stripe test mode with `4242 4242 4242 4242`, any future expiry, and any CVC.
+3. Open `/pokopia/daily-reset` and use Stripe test mode with `4242 4242 4242 4242`, any future expiry, and any CVC.
 4. Confirm the webhook returns success and inspect `public.orders` in Supabase.
 
 ## Expected order and fulfillment behavior
@@ -30,7 +30,7 @@ The webhook validates the Stripe signature, stores the Checkout Session ID, even
 
 ## Cancellation and spoof prevention
 
-Checkout cancellation returns to `/pokopia/funnel/daily-reset` and creates no order. Query parameters, local storage flags, and client-side purchase flags are not consulted by the webhook, qualification helper, or download endpoint.
+Checkout cancellation returns to `/pokopia/daily-reset` and creates no order. Query parameters, local storage flags, and client-side purchase flags are not consulted by the webhook, qualification helper, or download endpoint.
 
 ## Future Sequence 2 qualification
 

@@ -50,7 +50,7 @@ The separate P17 package and dedicated upgrade price prevent double payment for 
 
 ## Implemented route and security
 
-`/pokopia/funnel/completionist-kit` requires a server-verified paid P16 order with a matching P16 entitlement. URL parameters are lookup hints only; browser storage, client flags, and arbitrary product IDs are not purchase truth. Unqualified visitors redirect to `/pokopia/funnel/companion`.
+`/pokopia/completionist-kit` requires a server-verified paid P16 order with a matching P16 entitlement. URL parameters are lookup hints only; browser storage, client flags, and arbitrary product IDs are not purchase truth. Unqualified visitors redirect to `/pokopia/companion`.
 
 The offer is visibly disabled and has no P17 catalog or Stripe mapping. The checkout API rejects the canonical P17 upgrade unless a real published product and Stripe Price are later configured, and it rechecks the source P16 order server-side.
 

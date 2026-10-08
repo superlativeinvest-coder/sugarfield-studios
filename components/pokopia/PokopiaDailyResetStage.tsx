@@ -2,51 +2,53 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isOfferCheckoutReady, pokopiaFunnelOffers } from "@/data/pokopia-funnel";
-import { FunnelFrame, getCurrentFunnelState, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
-import { STORAGE_KEY } from "@/lib/attribution/capture";
+import { FunnelFrame, getCurrentFunnelState, useCanonicalFunnelTracking, useFunnelTracking } from "@/components/pokopia/PokopiaFunnelStage";
+import { readStoredAttribution } from "@/lib/attribution/capture";
 import { useCumulativeJourney } from "@/components/pokopia/useCumulativeJourney";
 import { FunnelCartSummary } from "@/components/pokopia/FunnelCartSummary";
 
-function readStoredAttribution(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined {
-  try {
-    const value = window.sessionStorage.getItem(STORAGE_KEY);
-    return value ? JSON.parse(value) as { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } : undefined;
-  } catch { return undefined; }
-}
+function readStoredAttributionForCheckout(): { firstTouch?: Record<string, string>; currentTouch?: Record<string, string> } | undefined { return readStoredAttribution(window.localStorage, window.sessionStorage) ?? undefined; }
 
 export function PokopiaDailyResetStage({ cumulativeEnabled = false }: { cumulativeEnabled?: boolean }) {
   const offer = pokopiaFunnelOffers.dailyReset;
   const ready = isOfferCheckoutReady(offer);
   const track = useFunnelTracking();
+  const trackCanonical = useCanonicalFunnelTracking();
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const hasLead = Boolean(getCurrentFunnelState()?.leadCaptured);
+  // sessionStorage is client-only. Read it after hydration so the server and
+  // initial browser render produce the same tree.
+  const [hasLead, setHasLead] = useState(false);
   const cumulative = useCumulativeJourney(cumulativeEnabled);
+
+  useEffect(() => { setHasLead(Boolean(getCurrentFunnelState()?.leadCaptured)); }, []);
 
   const skip = async () => {
     if (cumulativeEnabled) {
       const result = await cumulative.act("daily_reset_skipped");
-      if (result.nextRoute) window.location.assign(result.nextRoute);
+      if (result.nextRoute) { trackCanonical("p06_skipped", { funnelStep: "daily-reset", productId: "P06", productPriceCents: 499, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); window.location.assign(result.nextRoute); }
       else setStatus(result.error ?? "Your setup could not be updated.");
       return;
     }
     const state = getCurrentFunnelState();
     if (state) { state.dailyResetSkipped = true; state.lastStep = "companion"; window.sessionStorage.setItem("sugarfield_pokopia_daily_reset_funnel", JSON.stringify(state)); }
     track("pokopia_daily_reset_skipped", offer.funnelPrice);
+    trackCanonical("p06_skipped", { funnelStep: "daily-reset", productId: "P06", productPriceCents: 499, selectedProducts: ["P06"], cartValueCents: 0 });
     void fetch("/api/pokopia/funnel/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "daily_reset_skipped" }) });
   };
 
   async function buy() {
-    if (cumulativeEnabled) { const result = await cumulative.act("daily_reset_accepted"); if (result.nextRoute) window.location.assign(result.nextRoute); else setStatus(result.error ?? "Your setup could not be updated."); return; }
+    if (cumulativeEnabled) { const result = await cumulative.act("daily_reset_accepted"); if (result.nextRoute) { trackCanonical("p06_buy_clicked", { funnelStep: "daily-reset", productId: "P06", productPriceCents: 499, selectedProducts: result.journey?.selectedProducts, cartValueCents: result.journey?.currentTotalCents }); window.location.assign(result.nextRoute); } else setStatus(result.error ?? "Your setup could not be updated."); return; }
     const state = getCurrentFunnelState();
     if (!state) { setStatus("Start with the free starter so we can preserve your funnel session."); return; }
-    setLoading(true); setStatus(null); track("pokopia_daily_reset_checkout_started", offer.funnelPrice);
+    setLoading(true); setStatus(null); track("pokopia_daily_reset_checkout_started", offer.funnelPrice); trackCanonical("p06_buy_clicked", { funnelStep: "daily-reset", productId: "P06", productPriceCents: 499, selectedProducts: ["P06"], cartValueCents: 499 });
     try {
-      const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: offer.catalogProductId ?? "P06", offerId: offer.id, sku: offer.catalogProductId ?? "P06", upgrade: false, funnelId: state.funnelId, funnelStep: "daily_reset", funnelSession: state.sessionId, attribution: readStoredAttribution() }) });
+      const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: offer.catalogProductId ?? "P06", offerId: offer.id, sku: offer.catalogProductId ?? "P06", upgrade: false, funnelId: state.funnelId, funnelStep: "daily_reset", funnelSession: state.sessionId, attribution: readStoredAttributionForCheckout() }) });
       const result = await response.json() as { checkoutUrl?: string; error?: string };
       if (!response.ok || !result.checkoutUrl) { setStatus(result.error ?? "Stripe Checkout is unavailable right now."); return; }
+      trackCanonical("checkout_started", { funnelStep: "checkout", productId: "P06", productPriceCents: 499, selectedProducts: ["P06"], cartValueCents: 499 });
       window.location.assign(result.checkoutUrl);
     } catch { setStatus("Stripe Checkout is unavailable right now. Please try again later."); }
     finally { setLoading(false); }
@@ -75,7 +77,7 @@ export function PokopiaDailyResetStage({ cumulativeEnabled = false }: { cumulati
         <ul className="daily-reset-hero__benefits">{offer.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}</ul>
         <div className="daily-reset-hero__actions">
           {cumulativeEnabled ? <button type="button" onClick={buy} disabled={loading || !cumulative.ready}>{loading ? "UPDATING SETUP…" : "BUY"}</button> : ready ? <button type="button" onClick={buy} disabled={loading}>{loading ? "CONNECTING TO STRIPE…" : "BUY"}</button> : <button type="button" disabled aria-describedby="daily-reset-unavailable">BUY</button>}
-          <Link href="/pokopia/funnel/companion" onClick={(event) => { if (cumulativeEnabled) event.preventDefault(); void skip(); }}>SKIP</Link>
+          <Link href="/pokopia/companion" onClick={(event) => { if (cumulativeEnabled) event.preventDefault(); void skip(); }}>SKIP</Link>
         </div>
         {!ready && <p id="daily-reset-unavailable" className="focused-funnel__status">Checkout is not available yet: the Stripe price and fulfillment mapping are still pending.</p>}
         {cumulativeEnabled && <FunnelCartSummary journey={cumulative.journey} label="Add Daily Reset" deltaCents={499} newTotalCents={499} />}

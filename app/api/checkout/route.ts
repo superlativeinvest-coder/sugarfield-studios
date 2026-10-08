@@ -7,6 +7,8 @@ import { canViewP17Downsell } from "@/lib/pokopia-funnel/journey";
 import { getPokopiaJourney } from "@/lib/pokopia-funnel/journey-repository";
 import { getCustomerSession } from "@/lib/customer/session";
 import { supabaseCustomerMetadataForStripe } from "@/lib/customer/stripe-binding";
+import { consentMetadataForRequest } from "@/lib/privacy/advertising-consent-server";
+import { resolveCheckoutOrigin } from "@/lib/http/checkout-origin";
 
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
@@ -43,10 +45,9 @@ export async function POST(request: Request): Promise<Response> {
   const stripe = getStripeClient();
   if (!stripe) return Response.json({ error: "Stripe Checkout is not configured yet." } satisfies CheckoutResponse, { status: 503 });
 
-  // Production supplies its canonical public origin. Preview deployments use
-  // the request origin so Checkout always returns to the deployment that
-  // created the session.
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+  let siteUrl: string;
+  try { siteUrl = resolveCheckoutOrigin(request); }
+  catch { return Response.json({ error: "Checkout return origin is not approved." } satisfies CheckoutResponse, { status: 403 }); }
 
   const priceId = product.commerce?.stripePriceId;
   if (!priceId) return Response.json({ error: "This checkout price is not configured yet." } satisfies CheckoutResponse, { status: 503 });
@@ -55,11 +56,12 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const journeyId = request.headers.get("cookie")?.match(/(?:^|; )sf_pokopia_journey=([^;]+)/)?.[1];
+    const advertisingConsent = consentMetadataForRequest(request);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: checkoutRequest.funnelId === "pokopia_daily_reset" ? `${siteUrl}/pokopia/funnel/daily-reset` : `${siteUrl}/products/${product.slug}`,
+      cancel_url: checkoutRequest.funnelId === "pokopia_daily_reset" ? `${siteUrl}/pokopia/daily-reset` : `${siteUrl}/products/${product.slug}`,
       metadata: {
         product_id: product.id,
         offer_id: checkoutRequest.offerId ?? product.id,
@@ -74,6 +76,7 @@ export async function POST(request: Request): Promise<Response> {
         ...(journeyId ? { journey_id: journeyId } : {}),
         ...(checkoutRequest.attribution?.firstTouch ? { attribution_first_touch: JSON.stringify(checkoutRequest.attribution.firstTouch).slice(0, 500) } : {}),
         ...(checkoutRequest.attribution?.currentTouch ? { attribution_current_touch: JSON.stringify(checkoutRequest.attribution.currentTouch).slice(0, 500) } : {}),
+        ...advertisingConsent,
       },
     });
     return Response.json({ checkoutUrl: session.url ?? undefined } satisfies CheckoutResponse);
